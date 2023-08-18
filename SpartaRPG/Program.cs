@@ -5,6 +5,7 @@ internal class Program
 {
     private static Character player;
     private static List<Item> inventory;
+    private static List<Item> shop;
     private static Item[] items = new Item[50];
 
 
@@ -16,6 +17,7 @@ internal class Program
 
     static void GameDataSetting()
     {
+        Console.SetWindowSize(120, 30);
         // 캐릭터 정보 세팅
         player = new Character("기현빈", "전사", 1, 10, 5, 100, 1500);
 
@@ -43,8 +45,17 @@ internal class Program
 
         // 인벤토리 세팅
         inventory = new List<Item>();
-        inventory.Add(items[0]);
-        inventory.Add(items[9]);
+        inventory.Add(items[0]); items[0].IsSold = true;
+        inventory.Add(items[9]); items[9].IsSold = true;
+        inventory.Add(items[10]); items[10].IsSold = true;
+
+        // 상점 세팅
+        shop = new List<Item>();
+        foreach (var item in items)
+        {
+            if (item != null)
+                shop.Add(item);
+        }
     }
 
     static void DisplayGameIntro()
@@ -56,16 +67,19 @@ internal class Program
         Console.WriteLine();
         Console.WriteLine("1. 상태보기");
         Console.WriteLine("2. 인벤토리");
+        Console.WriteLine("3. 상점");
 
-        int input = CheckValidInput(1, 2);
+        int input = CheckValidInput(1, 3);
         switch (input)
         {
             case 1:
                 DisplayMyInfo();
                 break;
-
             case 2:
                 DisplayInventory();
+                break;
+            case 3:
+                DisplayShop();
                 break;
         }
     }
@@ -186,32 +200,15 @@ internal class Program
             //가 장착 중이라면
             if (selectedItem.IsEquipped)
             {
-                // 장착 해제
-                player.Equipment[(int)selectedItem.Part] = null;
-                selectedItem.IsEquipped = false;
+                Unwear(selectedItem.Part);
             }
             //가 장착 중이 아니라면
             else {
-                // 선택한 장비가 해당하는 파트에 이미 장착 중인 장비
-                var equipmentOfSelectedPart = player.Equipment[(int)selectedItem.Part];
-                // 가 있다면
-                if (equipmentOfSelectedPart != null)
-                {
-                    // 장착 중이던 장비를 해제하고
-                    player.Equipment[(int)selectedItem.Part] = null;
-                    equipmentOfSelectedPart.IsEquipped = false;
+                // 해당 파트에 이미 착용 중인 장비가 있다면
+                if (player.Equipment[(int)selectedItem.Part] != null)
+                    Unwear(selectedItem.Part);
 
-                    // 선택한 장비를 해당 파트에 장착
-                    player.Equipment[(int)selectedItem.Part] = selectedItem;
-                    selectedItem.IsEquipped = true;
-                }
-                // 가 없다면
-                else
-                {
-                    // 선택한 장비를 해당 파트에 장착
-                    player.Equipment[(int)selectedItem.Part] = selectedItem;
-                    selectedItem.IsEquipped = true;
-                }
+                Wear(selectedItem);
             }
             DisplayEquipment();
         }
@@ -222,7 +219,7 @@ internal class Program
         Console.Clear();
 
         Console.WriteLine("인벤토리 - 아이템 정렬");
-        Console.WriteLine("인벤토리를 정렬할 수 있습니다.");
+        Console.WriteLine("보유 중인 아이템을 관리할 수 있습니다.");
         Console.WriteLine();
         Console.WriteLine("[아이템 목록]");
         for (int i = 0; i < inventory.Count; i++)
@@ -264,6 +261,42 @@ internal class Program
         }
     }
 
+    static void DisplayShop()
+    {
+        Console.Clear();
+
+        Console.WriteLine("상점");
+        Console.WriteLine("필요한 아이템을 얻을 수 있는 상점입니다");
+        Console.WriteLine();
+        Console.WriteLine("[보유 골드]");
+        Console.WriteLine($"{player.Gold} G");
+        Console.WriteLine();
+        Console.WriteLine("[아이템 목록]");
+
+        foreach (var item in shop)
+        {
+            item.PrintInfoAtShop();
+        }
+        Console.WriteLine();
+        Console.WriteLine("1. 아이템 구매");
+        Console.WriteLine("2. 아이템 판매");
+        Console.WriteLine("0. 나가기");
+
+        int input = CheckValidInput(0, 2);
+        switch (input)
+        {
+            case 0:
+                DisplayGameIntro();
+                break;
+            case 1:
+                DisplayBuyItem();
+                break;
+            case 2:
+                DisplaySellItem();
+                break;
+        }
+    }
+
     static int CheckValidInput(int min, int max)
     {
         while (true)
@@ -284,6 +317,187 @@ internal class Program
             Console.WriteLine("잘못된 입력입니다.");
         }
     }
+
+    static void DisplayBuyItem()
+    {
+        Console.Clear();
+
+        Console.WriteLine("상점 - 아이템 구매");
+        Console.WriteLine("필요한 아이템을 얻을 수 있는 상점입니다");
+        Console.WriteLine();
+        Console.WriteLine("[보유 골드]");
+        Console.WriteLine($"{player.Gold} G");
+        Console.WriteLine();
+        Console.WriteLine("[아이템 목록]");
+
+        for (int i = 0; i < shop.Count; i++)
+        {
+            shop[i].PrintInfoAtShop(i+1);
+        }
+        Console.WriteLine();
+        Console.WriteLine("0. 나가기");
+
+        InputLoopForShop(0, shop.Count);
+        DisplayShop();
+    }
+
+    static void DisplaySellItem()
+    {
+        Console.Clear();
+
+        Console.WriteLine("상점 - 아이템 판매");
+        Console.WriteLine("필요한 아이템을 얻을 수 있는 상점입니다.");
+        Console.WriteLine();
+        Console.WriteLine("[보유 골드]");
+        Console.WriteLine($"{player.Gold} G");
+        Console.WriteLine();
+        Console.WriteLine("[아이템 목록]");
+        for (int i = 0; i < inventory.Count; i++)
+        {
+            inventory[i].PrintInfoAtShop(i + 1, true);
+        }
+        Console.WriteLine();
+        Console.WriteLine("0. 나가기");
+
+        InputLoopForShop(0, shop.Count, true);
+        DisplayShop();
+    }
+
+    static void InputLoopForShop(int exit, int max, bool sellMode = false)
+    {
+        while (true)
+        {
+            Console.WriteLine();
+            Console.WriteLine("원하시는 행동을 입력해주세요.");
+            Console.Write(">> ");
+
+            string input = Console.ReadLine();
+
+            bool parseSuccess = int.TryParse(input, out var ret);
+            if (parseSuccess)
+            {
+                if (ret == exit) break;
+                else if (ret > exit && ret <= max)
+                {
+                    // (구매 모드)
+                    if(!sellMode)
+                    {   
+                        // 선택한 장비
+                        var selectedItem = shop[ret - 1];
+                        //가 이미 구매됐다면
+                        if (selectedItem.IsSold)
+                            Console.WriteLine("이미 구매한 아이템입니다.");
+                        //가 구매 가능하다면
+                        else
+                        {
+                            // 돈이 충분하다면
+                            if (player.Gold >= selectedItem.Price)
+                            {
+                                Console.WriteLine("구매를 완료했습니다.");
+                                BuyItem(selectedItem);
+                            }
+                            // 돈이 충분치 않다면
+                            else
+                                Console.WriteLine("Gold가 부족합니다.");
+                        }
+                    }
+                    // (판매 모드)
+                    else
+                    {
+                        // 선택한 장비
+                        var selectedItem = inventory[ret - 1];
+
+                        // 가 장착 중이라면
+                        if (selectedItem.IsEquipped)
+                        {
+                            Console.WriteLine("장착 중인 장비는 판매할 수 없습니다.");
+                            Console.WriteLine("해제하고 판매하시겠습니까? (예: 0 / 아니오: 1)");
+                            if (CheckValidInput(0, 1) == 0)
+                            {
+                                Unwear(selectedItem.Part);
+                                Console.WriteLine("판매를 완료했습니다.");
+                                SellItem(selectedItem);
+                            }
+                        }
+                        // 가 장착 중이 아니라면
+                        else
+                        {
+                            Console.WriteLine("판매를 완료했습니다.");
+                            SellItem(selectedItem);
+                        }
+                    }
+                }
+                else Console.WriteLine("잘못된 입력입니다.");
+            }
+            else Console.WriteLine("잘못된 입력입니다.");
+        }
+    }
+
+    static void Wear(Item item)
+    {
+        player.Equipment[(int)item.Part] = item;
+        item.IsEquipped = true;
+    }
+
+    static void Unwear(Item.Parts part)
+    {
+        player.Equipment[(int)part].IsEquipped = false;
+        player.Equipment[(int)part] = null;
+    }
+
+    static void BuyItem(Item item)
+    {
+        player.Gold -= item.Price;
+        inventory.Add(item);
+        item.IsSold = true;
+        RefreshGoldAndList(false);
+    }
+
+    static void SellItem(Item item)
+    {
+        player.Gold += (int)(item.Price * 0.85f);
+        inventory.Remove(item);
+        item.IsSold = false;
+        RefreshGoldAndList(true);
+    }
+
+    static void RefreshGoldAndList(bool sellMode)
+    {
+        var currentCursor = Console.GetCursorPosition();
+        Console.SetCursorPosition(0, 4);
+        Console.Write("                                   \r");
+        Console.Write($"{player.Gold} G");
+        Console.SetCursorPosition(0, 7);
+
+        if(!sellMode)
+        {
+            for (int i = 0; i < shop.Count; i++)
+            {
+                ClearLine();
+                shop[i].PrintInfoAtShop(i + 1, sellMode);
+            }
+        }
+        else
+        {
+            for (int i = 0; i < inventory.Count; i++)
+            {
+                ClearLine();
+                inventory[i].PrintInfoAtShop(i + 1, sellMode);
+            }
+            ClearLine();
+        }
+
+        Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
+    }
+
+    static void ClearLine()
+    {
+        for(int i = 0; i < Console.WindowWidth; i++)
+        {
+            Console.Write(" ");
+        }
+        Console.Write("\r");
+    }
 }
 
 
@@ -295,7 +509,7 @@ public class Character
     public int Atk { get; }
     public int Def { get; }
     public int Hp { get; }
-    public int Gold { get; }
+    public int Gold { get; set; }
     public Item[] Equipment { get; set; }
 
     public Character(string name, string job, int level, int atk, int def, int hp, int gold)
@@ -367,24 +581,30 @@ public class Item
                 statByPart = "체력";
                 break;
         }
-        
-        string firstInfo = $"- {printNum}{equip}{Name}".PadRight(15, ' ');
-        string secondInfo = $"| {statByPart} + {Stat}".PadRight(15, ' ');
-        string thirdInfo = $"| {Description}".PadRight(15, ' ');
 
-        Console.Write($"{firstInfo}\t{secondInfo}\t{thirdInfo}\t");
+        Console.Write($"- {printNum}{equip}{Name}");
+        Console.SetCursorPosition(25, Console.GetCursorPosition().Top);
+        Console.Write($"| {statByPart} + {Stat}");
+        Console.SetCursorPosition(40, Console.GetCursorPosition().Top);
+        Console.Write($"| {Description}");
+        Console.SetCursorPosition(100, Console.GetCursorPosition().Top);
     }
     public void PrintInfoAtInventory(int num = 0)
     {
         PrintInfo(num);
         Console.WriteLine();
     }
-    public void PrintInfoAtShop()
+    public void PrintInfoAtShop(int num = 0, bool sellMode = false)
     {
-        PrintInfo();
-        if (IsSold)
-            Console.WriteLine("| 구매 완료");
+        PrintInfo(num);
+        if (!sellMode)
+        {
+            if (IsSold)
+                Console.WriteLine("| 구매 완료");
+            else
+                Console.WriteLine($"| {Price}G");
+        }
         else
-            Console.WriteLine($"| {Price}G");
+            Console.WriteLine($"| {(int)(Price * 0.85f)}G");
     }
 }
