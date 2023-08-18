@@ -83,7 +83,7 @@ internal class Program
         Console.Write($"공격력: {player.Atk}");
         // 장비 효과 계산
         if (player.Equipment[(int)Item.Parts.WEAPON] != null)
-            Console.Write($" + {player.Equipment[(int)Item.Parts.WEAPON].Stat}");
+            Console.Write($" (+{player.Equipment[(int)Item.Parts.WEAPON].Stat})");
         Console.WriteLine();
 
         Console.Write($"방어력: {player.Def}");
@@ -97,7 +97,7 @@ internal class Program
             if (player.Equipment[(int)Item.Parts.LEGGINGS] != null)
                 defBonus += player.Equipment[(int)Item.Parts.LEGGINGS].Stat;
 
-            Console.Write($" + {defBonus}");
+            Console.Write($" (+{defBonus})");
         }
         Console.WriteLine();
 
@@ -112,7 +112,7 @@ internal class Program
             if (player.Equipment[(int)Item.Parts.BOOTS] != null)
                 hpBonus += player.Equipment[(int)Item.Parts.BOOTS].Stat;
 
-            Console.Write($" + {hpBonus}");
+            Console.Write($" (+{hpBonus})");
         }
         Console.WriteLine();
 
@@ -143,9 +143,10 @@ internal class Program
         }
         Console.WriteLine();
         Console.WriteLine("1. 장착 관리");
+        Console.WriteLine("2. 아이템 정렬");
         Console.WriteLine("0. 나가기");
 
-        int input = CheckValidInput(0, 1);
+        int input = CheckValidInput(0, 2);
         switch (input)
         {
             case 0:
@@ -153,6 +154,9 @@ internal class Program
                 break;
             case 1:
                 DisplayEquipment();
+                break;
+            case 2:
+                DisplayInventorySorting();
                 break;
         }
     }
@@ -174,7 +178,7 @@ internal class Program
 
         int input = CheckValidInput(0, inventory.Count);
         if (input == 0)
-            DisplayGameIntro();
+            DisplayInventory();
         else
         {
             // 선택한 장비
@@ -210,6 +214,53 @@ internal class Program
                 }
             }
             DisplayEquipment();
+        }
+    }
+
+    static void DisplayInventorySorting()
+    {
+        Console.Clear();
+
+        Console.WriteLine("인벤토리 - 아이템 정렬");
+        Console.WriteLine("인벤토리를 정렬할 수 있습니다.");
+        Console.WriteLine();
+        Console.WriteLine("[아이템 목록]");
+        for (int i = 0; i < inventory.Count; i++)
+        {
+            inventory[i].PrintInfoAtInventory(i + 1);
+        }
+        Console.WriteLine();
+        Console.WriteLine("1. 이름");
+        Console.WriteLine("2. 부위");
+        Console.WriteLine("3. 능력치");
+        Console.WriteLine("4. 가격");
+        Console.WriteLine("5. 장착");
+        Console.WriteLine("6. 강화");
+        Console.WriteLine("0. 나가기");
+
+        int input = CheckValidInput(0, 6);
+        switch(input)
+        {
+            case 0:
+                DisplayGameIntro(); break;
+            case 1:
+                inventory = inventory.OrderBy(item => item.Name).ToList();
+                DisplayInventorySorting(); break;
+            case 2:
+                inventory = inventory.OrderBy(item => item.Part).ToList();
+                DisplayInventorySorting(); break;
+            case 3:
+                inventory = inventory.OrderByDescending(item => item.Stat).ToList();
+                DisplayInventorySorting(); break;
+            case 4:
+                inventory = inventory.OrderBy(item => item.Price).ToList();
+                DisplayInventorySorting(); break;
+            case 5:
+                inventory = inventory.OrderByDescending(item => item.IsEquipped).ToList();
+                DisplayInventorySorting(); break;
+            case 6:
+                inventory = inventory.OrderByDescending(item => item.Level).ToList();
+                DisplayInventorySorting(); break;
         }
     }
 
