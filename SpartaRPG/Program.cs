@@ -3,13 +3,13 @@
     private static Character _player;
     private static List<Item> _inventory;
     private static List<Item> _shop;
+    private static List<Dungeon> _dungeons;
     private static Item[] _items = new Item[50];
-
 
     static void Main(string[] args)
     {
         GameDataSetting();
-        while(true) { DisplayGameIntro(); }
+        while(_player.CurrentHp > 0) { DisplayGameIntro(); }
     }
 
     static void GameDataSetting()
@@ -53,7 +53,16 @@
             if (item != null)
                 _shop.Add(item);
         }
+
+        // 던전 세팅
+        _dungeons = new List<Dungeon>();
+        _dungeons.Add(new Dungeon(_player, "쉬운 던전", 5, 1000));
+        _dungeons.Add(new Dungeon(_player, "일반 던전", 11, 1700));
+        _dungeons.Add(new Dungeon(_player, "어려운 던전", 17, 2500));
+
     }
+
+    #region 씬 전환
 
     static void DisplayGameIntro()
     {
@@ -62,11 +71,12 @@
         Console.WriteLine("스파르타 마을에 오신 여러분 환영합니다.");
         Console.WriteLine("이곳에서 던전으로 들어가기 전 활동을 할 수 있습니다.");
         Console.WriteLine();
-        Console.WriteLine("1. 상태보기");
+        Console.WriteLine("1. 상태 보기");
         Console.WriteLine("2. 인벤토리");
         Console.WriteLine("3. 상점");
+        Console.WriteLine("4. 던전 입장");
 
-        int input = CheckValidInput(1, 3);
+        int input = CheckValidInput(1, 4);
         switch (input)
         {
             case 1:
@@ -78,6 +88,9 @@
             case 3:
                 DisplayShop();
                 break;
+            case 4:
+                DisplayDungeonIntro();
+                break;
         }
     }
 
@@ -85,47 +98,15 @@
     {
         Console.Clear();
 
-        Console.WriteLine("상태보기");
+        PrintTitle("상태 보기");
         Console.WriteLine("캐릭터의 정보를 표시합니다.");
         Console.WriteLine();
         Console.WriteLine($"Lv.{_player.Level}");
         Console.WriteLine($"{_player.Name} ({_player.Job})");
 
-        Console.Write($"공격력: {_player.Atk}");
-        // 장비 효과 계산
-        if (_player.Equipment[(int)Item.Parts.WEAPON] != null)
-            Console.Write($" (+{_player.Equipment[(int)Item.Parts.WEAPON].Stat})");
-        Console.WriteLine();
-
-        Console.Write($"방어력: {_player.Def}");
-        // 장비 효과 계산
-        if (_player.Equipment[(int)Item.Parts.CHESTPLATE] != null || _player.Equipment[(int)Item.Parts.LEGGINGS] != null)
-        {
-            int defBonus = 0;
-            if (_player.Equipment[(int)Item.Parts.CHESTPLATE] != null)
-                defBonus += _player.Equipment[(int)Item.Parts.CHESTPLATE].Stat;
-
-            if (_player.Equipment[(int)Item.Parts.LEGGINGS] != null)
-                defBonus += _player.Equipment[(int)Item.Parts.LEGGINGS].Stat;
-
-            Console.Write($" (+{defBonus})");
-        }
-        Console.WriteLine();
-
-        Console.Write($"체력: {_player.Hp}");
-        // 장비 효과 계산
-        if (_player.Equipment[(int)Item.Parts.HELMET] != null || _player.Equipment[(int)Item.Parts.BOOTS] != null)
-        {
-            int hpBonus = 0;
-            if (_player.Equipment[(int)Item.Parts.HELMET] != null)
-                hpBonus += _player.Equipment[(int)Item.Parts.HELMET].Stat;
-
-            if (_player.Equipment[(int)Item.Parts.BOOTS] != null)
-                hpBonus += _player.Equipment[(int)Item.Parts.BOOTS].Stat;
-
-            Console.Write($" (+{hpBonus})");
-        }
-        Console.WriteLine();
+        PrintAtk();
+        PrintDef();
+        PrintHp();
 
         Console.WriteLine($"Gold: {_player.Gold} G");
         Console.WriteLine();
@@ -144,7 +125,7 @@
     {
         Console.Clear();
 
-        Console.WriteLine("인벤토리");
+        PrintTitle("인벤토리");
         Console.WriteLine("보유 중인 아이템을 관리할 수 있습니다.");
         Console.WriteLine();
         Console.WriteLine("[아이템 목록]");
@@ -176,7 +157,7 @@
     {
         Console.Clear();
 
-        Console.WriteLine("인벤토리 - 장착 관리");
+        PrintTitle("인벤토리 - 장착 관리");
         Console.WriteLine("보유 중인 아이템을 관리할 수 있습니다.");
         Console.WriteLine();
         Console.WriteLine("[아이템 목록]");
@@ -215,7 +196,7 @@
     {
         Console.Clear();
 
-        Console.WriteLine("인벤토리 - 아이템 정렬");
+        PrintTitle("인벤토리 - 아이템 정렬");
         Console.WriteLine("보유 중인 아이템을 관리할 수 있습니다.");
         Console.WriteLine();
         Console.WriteLine("[아이템 목록]");
@@ -263,7 +244,7 @@
     {
         Console.Clear();
 
-        Console.WriteLine("상점");
+        PrintTitle("상점");
         Console.WriteLine("필요한 아이템을 얻을 수 있는 상점입니다");
         Console.WriteLine();
         Console.WriteLine("[보유 골드]");
@@ -295,32 +276,11 @@
         }
     }
 
-    static int CheckValidInput(int min, int max)
-    {
-        while (true)
-        {
-            Console.WriteLine();
-            Console.WriteLine("원하시는 행동을 입력해주세요.");
-            Console.Write(">> ");
-
-            string input = Console.ReadLine();
-
-            bool parseSuccess = int.TryParse(input, out var ret);
-            if (parseSuccess)
-            {
-                if (ret >= min && ret <= max)
-                    return ret;
-            }
-
-            Console.WriteLine("잘못된 입력입니다.");
-        }
-    }
-
     static void DisplayBuyItem()
     {
         Console.Clear();
 
-        Console.WriteLine("상점 - 아이템 구매");
+        PrintTitle("상점 - 아이템 구매");
         Console.WriteLine("필요한 아이템을 얻을 수 있는 상점입니다");
         Console.WriteLine();
         Console.WriteLine("[보유 골드]");
@@ -343,7 +303,7 @@
     {
         Console.Clear();
 
-        Console.WriteLine("상점 - 아이템 판매");
+        PrintTitle("상점 - 아이템 판매");
         Console.WriteLine("필요한 아이템을 얻을 수 있는 상점입니다.");
         Console.WriteLine();
         Console.WriteLine("[보유 골드]");
@@ -359,6 +319,95 @@
 
         InputLoopForShop(0, _shop.Count, true);
         DisplayShop();
+    }
+
+    static void DisplayDungeonIntro()
+    {
+        Console.Clear();
+
+        PrintTitle("던전 입장");
+        Console.WriteLine("이곳에서 던전으로 들어가기전 활동을 할 수 있습니다.");
+        Console.WriteLine();
+        Console.WriteLine("[플레이어 능력치]");
+        PrintAtk();
+        PrintDef();
+        PrintHp();
+        Console.WriteLine();
+        for (int i = 0; i < _dungeons.Count; i++)
+        {
+            _dungeons[i].PrintInfo(i + 1);
+        }
+        Console.WriteLine();
+        Console.WriteLine("0. 나가기");
+
+        int input = CheckValidInput(0, _dungeons.Count);
+        if (input == 0)
+        {
+            //DisplayGameIntro();
+        }
+        else
+        {
+            DisplayDungeonOuttro(input - 1);
+        }
+    }
+
+    static void DisplayDungeonOuttro(int stage)
+    {
+        Console.Clear();
+
+        var iHp = _player.CurrentHp;
+        var iGold = _player.Gold;
+
+        bool dungeonClear = _dungeons[stage].ExploreDungeon(PrintAtk(false), PrintDef(false));
+
+        if (dungeonClear)
+        {
+            PrintTitle("던전 클리어");
+            Console.WriteLine("축하합니다!!");
+            Console.WriteLine($"{_dungeons[stage].Name}을 클리어 하였습니다.");
+        }
+        else
+        {
+            PrintTitle("던전 실패");
+            Console.WriteLine($"{_dungeons[stage].Name}에서 도망쳤습니다.");
+        }
+        Console.WriteLine();
+        Console.WriteLine("[탐험 결과]");
+        Console.WriteLine($"체력 {iHp} -> {_player.CurrentHp}");
+        if(dungeonClear) Console.WriteLine($"Gold {iGold} -> {_player.Gold}");
+
+        Console.WriteLine();
+        Console.WriteLine("0. 나가기");
+
+        int input = CheckValidInput(0, 0);
+        if (input == 0)
+        {
+            //DisplayGameIntro();
+        }
+    }
+
+    #endregion
+
+    #region 편의성 함수
+    static int CheckValidInput(int min, int max)
+    {
+        while (true)
+        {
+            Console.WriteLine();
+            Console.WriteLine("원하시는 행동을 입력해주세요.");
+            Console.Write(">> ");
+
+            string input = Console.ReadLine();
+
+            bool parseSuccess = int.TryParse(input, out var ret);
+            if (parseSuccess)
+            {
+                if (ret >= min && ret <= max)
+                    return ret;
+            }
+
+            Console.WriteLine("잘못된 입력입니다.");
+        }
     }
 
     static void InputLoopForShop(int exit, int max, bool sellMode = false)
@@ -378,8 +427,8 @@
                 else if (ret > exit && ret <= max)
                 {
                     // (구매 모드)
-                    if(!sellMode)
-                    {   
+                    if (!sellMode)
+                    {
                         // 선택한 장비
                         var selectedItem = _shop[ret - 1];
                         //가 이미 구매됐다면
@@ -496,6 +545,83 @@
         }
         Console.Write("\r");
     }
+
+    static void PrintTitle(string title, ConsoleColor color = ConsoleColor.DarkRed)
+    {
+        var currentColor = Console.ForegroundColor;
+        Console.ForegroundColor = color;
+        Console.WriteLine($"[{title}]");
+        Console.ForegroundColor = currentColor;
+    }
+
+    static int PrintAtk(bool print = true)
+    {
+        int atk = _player.Atk;
+        int atkBonus = 0;
+
+        // 장비 효과 계산
+        if (_player.Equipment[(int)Item.Parts.WEAPON] != null)
+        {
+            atkBonus = _player.Equipment[(int)Item.Parts.WEAPON].Stat;
+        }
+
+        if(print)
+        {
+            Console.Write($"공격력: {atk}");
+            if (atkBonus != 0) Console.Write($" (+{atkBonus})");
+            Console.WriteLine();
+        }
+        
+
+        return atk + atkBonus;
+    }
+
+    static int PrintDef(bool print = true)
+    {
+        int def = _player.Def;
+        int defBonus = 0;
+
+
+        // 장비 효과 계산
+        if (_player.Equipment[(int)Item.Parts.CHESTPLATE] != null)
+            defBonus += _player.Equipment[(int)Item.Parts.CHESTPLATE].Stat;
+
+        if (_player.Equipment[(int)Item.Parts.LEGGINGS] != null)
+            defBonus += _player.Equipment[(int)Item.Parts.LEGGINGS].Stat;
+
+        if(print)
+        {
+            Console.Write($"방어력: {def}");
+            if (defBonus != 0) Console.WriteLine($" (+{defBonus})");
+            Console.WriteLine();
+        }
+        
+        return def + defBonus;
+    }
+
+    static int PrintHp(bool print = true)
+    {
+        int hp = _player.MaxHp;
+        int hpBonus = 0;
+
+        // 장비 효과 계산
+        if (_player.Equipment[(int)Item.Parts.HELMET] != null)
+            hpBonus += _player.Equipment[(int)Item.Parts.HELMET].Stat;
+
+        if (_player.Equipment[(int)Item.Parts.BOOTS] != null)
+            hpBonus += _player.Equipment[(int)Item.Parts.BOOTS].Stat;
+
+        if(print)
+        {
+            Console.Write($"체력: {_player.CurrentHp} / {hp}");
+            if (hpBonus != 0) Console.WriteLine($" (+{hpBonus})");
+            Console.WriteLine();
+        }
+
+        return hp + hpBonus;
+    }
+
+    #endregion
 }
 public class Character
 {
@@ -504,9 +630,10 @@ public class Character
     public int Level { get; }
     public int Atk { get; }
     public int Def { get; }
-    public int Hp { get; }
+    public int MaxHp { get; }
+    public int CurrentHp { get; set; }
     public int Gold { get; set; }
-    public Item[] Equipment { get; set; }
+    public Item[]? Equipment { get; set; }
 
     public Character(string name, string job, int level, int atk, int def, int hp, int gold)
     {
@@ -515,9 +642,35 @@ public class Character
         Level = level;
         Atk = atk;
         Def = def;
-        Hp = hp;
+        MaxHp = hp;
+        CurrentHp = hp;
         Gold = gold;
         Equipment = new Item[System.Enum.GetValues(typeof(Item.Parts)).Length];
+    }
+
+    public void ChangeHP(int hp)
+    {
+        var totalHp = MaxHp;
+
+        var helmet = Equipment[(int)(Item.Parts.HELMET)];
+        var boots = Equipment[(int)(Item.Parts.BOOTS)];
+
+        if (helmet != null)
+            totalHp += helmet.Stat;
+        if (boots != null)
+            totalHp += boots.Stat;
+
+        CurrentHp += hp;
+
+        if(totalHp < CurrentHp)
+        {
+            CurrentHp = totalHp;
+        }
+
+        if(CurrentHp < 0)
+        {
+            CurrentHp = 0;
+        }
     }
 }
 public class Item
@@ -602,5 +755,67 @@ public class Item
         }
         else
             Console.WriteLine($"| {(int)(Price * 0.85f)}G");
+    }
+}
+public class Dungeon
+{
+    public string Name { get; }
+    public int Condition { get; }
+    public List<int> Reward { get; } // Reward[0]은 골드, Reward[1]부터는 아이템 id
+
+    Action<int> PlayerHPHandler;
+    Action<int> PlayerGoldHandler;
+
+    public Dungeon(Character player, string name, int condition, int gold)
+    {
+        PlayerHPHandler = player.ChangeHP;
+        PlayerGoldHandler = (int rewardGold) => { player.Gold += rewardGold; };
+        Reward = new List<int>();
+
+        Name = name;
+        Condition = condition;
+        Reward.Add(gold);
+    }
+
+    public void AddReward(int id)
+    {
+        Reward.Add(id);
+    }
+
+    public bool ExploreDungeon(int atk, int def)
+    {
+        Random rnd = new Random();
+
+        int damage = rnd.Next(20, 35 + 1);
+        damage -= def - Condition;
+
+        if (damage < 0) damage = 0;
+
+        if (def < Condition && rnd.Next(0, 100) < 40)
+        {
+            // 던전 실패
+            PlayerHPHandler(-(int)(damage * 0.5f));
+
+            return false;
+        }
+        else
+        {
+            // 던전 클리어
+            int rewardGold = (int)(Reward[0] * rnd.Next(100 + atk, 100 + atk * 2 + 1) * 0.01f); // reward의 1.x배
+
+            PlayerHPHandler(-damage);
+            PlayerGoldHandler(rewardGold);
+
+            return true;
+        }
+    }
+
+    public void PrintInfo(int num = 0)
+    {
+        string printNum = (num == 0) ? "" : $"{num}. ";
+        Console.Write($"{printNum}{Name}");
+        Console.SetCursorPosition(25, Console.GetCursorPosition().Top);
+        Console.Write($"| 방어력 {Condition} 이상 권장");
+        Console.WriteLine();
     }
 }
