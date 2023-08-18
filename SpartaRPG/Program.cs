@@ -77,8 +77,9 @@
         Console.WriteLine("2. 인벤토리");
         Console.WriteLine("3. 상점");
         Console.WriteLine("4. 던전 입장");
+        Console.WriteLine("5. 휴식하기");
 
-        int input = CheckValidInput(1, 4);
+        int input = CheckValidInput(1, 5);
         switch (input)
         {
             case 1:
@@ -92,6 +93,9 @@
                 break;
             case 4:
                 DisplayDungeonIntro();
+                break;
+            case 5:
+                DisplayRestPlace();
                 break;
         }
     }
@@ -400,6 +404,41 @@
         CheckValidInput(0, 0);
     }
 
+    static void DisplayRestPlace()
+    {
+        Console.Clear();
+
+        PrintTitle("휴식하기");
+        Console.WriteLine("500 G를 내면 체력을 회복할 수 있습니다.");
+        Console.WriteLine();
+        Console.WriteLine("[보유 골드]");
+        Console.WriteLine($"{_player.Gold} G");
+        Console.WriteLine();
+        Console.WriteLine("1. 휴식하기");
+        Console.WriteLine("0. 나가기");
+
+        int input;
+        do
+        {
+            input = CheckValidInput(0, 1);
+
+            if (input == 1)
+            {
+                if (_player.Gold >= 500)
+                {
+                    _player.ChangeHP(100);
+                    _player.Gold -= 500;
+                    Console.WriteLine("휴식을 완료했습니다.");
+                    RefreshGold();
+                }
+                else
+                {
+                    Console.WriteLine("Gold가 부족합니다.");
+                }
+            }
+        } while (input != 0);
+    }
+
     #endregion
 
     #region 편의성 함수
@@ -511,7 +550,8 @@
         _player.Gold -= item.Price;
         _inventory.Add(item);
         item.IsSold = true;
-        RefreshGoldAndList(false);
+        RefreshGold();
+        RefreshItemList(false);
     }
 
     static void SellItem(Item item)
@@ -519,18 +559,26 @@
         _player.Gold += (int)(item.Price * 0.85f);
         _inventory.Remove(item);
         item.IsSold = false;
-        RefreshGoldAndList(true);
+        RefreshGold();
+        RefreshItemList(true);
     }
 
-    static void RefreshGoldAndList(bool sellMode)
+    static void RefreshGold()
     {
         var currentCursor = Console.GetCursorPosition();
         Console.SetCursorPosition(0, 4);
-        Console.Write("                                   \r");
+        ClearLine();
         Console.Write($"{_player.Gold} G");
+
+        Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
+    }
+
+    static void RefreshItemList(bool sellMode)
+    {
+        var currentCursor = Console.GetCursorPosition();
         Console.SetCursorPosition(0, 7);
 
-        if(!sellMode)
+        if (!sellMode)
         {
             for (int i = 0; i < _shop.Count; i++)
             {
@@ -645,7 +693,8 @@ public class Character
     public int Atk { get; }
     public int Def { get; }
     public int MaxHp { get; }
-    public int CurrentHp { get; set; }
+    private int _currentHp;
+    public int CurrentHp { get { return _currentHp; } }
     public int Gold { get; set; }
     public Item[]? Equipment { get; set; }
 
@@ -657,7 +706,7 @@ public class Character
         Atk = atk;
         Def = def;
         MaxHp = hp;
-        CurrentHp = hp;
+        _currentHp = hp;
         Gold = gold;
         Equipment = new Item[System.Enum.GetValues(typeof(Item.Parts)).Length];
     }
@@ -674,16 +723,16 @@ public class Character
         if (boots != null)
             totalHp += boots.Stat;
 
-        CurrentHp += hp;
+        _currentHp += hp;
 
-        if(totalHp < CurrentHp)
+        if (totalHp < CurrentHp)
         {
-            CurrentHp = totalHp;
+            _currentHp = totalHp;
         }
 
-        if(CurrentHp < 0)
+        if (CurrentHp < 0)
         {
-            CurrentHp = 0;
+            _currentHp = 0;
         }
     }
 }
@@ -829,7 +878,7 @@ public class Dungeon
         string printNum = (num == 0) ? "" : $"{num}. ";
         Console.Write($"{printNum}{Name}");
         Console.SetCursorPosition(25, Console.GetCursorPosition().Top);
-        Console.Write($"| 방어력 {Condition} 이상 권장");
+        Console.Write($"| 방어력 {Condition}이상 권장");
         Console.WriteLine();
     }
 }
