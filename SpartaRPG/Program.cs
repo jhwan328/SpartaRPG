@@ -10,6 +10,7 @@
     {
         GameDataSetting();
         while(_player.CurrentHp > 0) { DisplayGameIntro(); }
+        DisplayGameOuttro();
     }
 
     static void GameDataSetting()
@@ -68,6 +69,7 @@
     {
         Console.Clear();
 
+        PrintTitle("마을");
         Console.WriteLine("스파르타 마을에 오신 여러분 환영합니다.");
         Console.WriteLine("이곳에서 던전으로 들어가기 전 활동을 할 수 있습니다.");
         Console.WriteLine();
@@ -384,6 +386,18 @@
         {
             //DisplayGameIntro();
         }
+    }
+
+    static void DisplayGameOuttro()
+    {
+        Console.Clear();
+
+        PrintTitle("게임 오버");
+        Console.WriteLine("사망했습니다.");
+        Console.WriteLine();
+        Console.WriteLine("0. 나가기");
+
+        CheckValidInput(0, 0);
     }
 
     #endregion
