@@ -1,26 +1,22 @@
-﻿using static System.Reflection.Metadata.BlobBuilder;
-using System.Net.NetworkInformation;
-
-internal class Program
+﻿internal class Program
 {
-    private static Character player;
-    private static List<Item> inventory;
-    private static List<Item> shop;
-    private static Item[] items = new Item[50];
+    private static Character _player;
+    private static List<Item> _inventory;
+    private static List<Item> _shop;
+    private static Item[] _items = new Item[50];
 
 
     static void Main(string[] args)
     {
         GameDataSetting();
         while(true) { DisplayGameIntro(); }
-        
     }
 
     static void GameDataSetting()
     {
         Console.SetWindowSize(120, 30);
         // 캐릭터 정보 세팅
-        player = new Character("기현빈", "전사", 1, 10, 5, 100, 1500);
+        _player = new Character("기현빈", "전사", 1, 10, 5, 100, 1500);
 
         //WEAPON,
         //HELMET,
@@ -29,33 +25,33 @@ internal class Program
         //BOOTS,
 
         // 아이템 정보 세팅
-        items[0] = new Item("낡은 검", 0, Item.Parts.WEAPON, 0, 2, 600, "쉽게 볼 수 있는 낡은 검 입니다.");
-        items[1] = new Item("청동 도끼", 1, Item.Parts.WEAPON, 0, 5, 1500, "어디선가 사용됐던 것 같은 도끼입니다.");
-        items[2] = new Item("스파르타의 창", 2, Item.Parts.WEAPON, 0, 7, 3200, "스파르타의 전사들이 사용했다는 전설의 창입니다.");
+        _items[0] = new Item("낡은 검", 0, Item.Parts.WEAPON, 0, 2, 600, "쉽게 볼 수 있는 낡은 검 입니다.");
+        _items[1] = new Item("청동 도끼", 1, Item.Parts.WEAPON, 0, 5, 1500, "어디선가 사용됐던 것 같은 도끼입니다.");
+        _items[2] = new Item("스파르타의 창", 2, Item.Parts.WEAPON, 0, 7, 3200, "스파르타의 전사들이 사용했다는 전설의 창입니다.");
         //items[3] = new Item("광선검", 3, Item.Parts.WEAPON, 0, 15, 2200, "실명할 정도의 빛으로 내뿜는 강력한 검입니다.");
 
-        items[4] = new Item("수련자 두건", 4, Item.Parts.HELMET, 0, 5, 1000, "수련에 도움을 주는 두건입니다.");
-        items[5] = new Item("무쇠 투구", 5, Item.Parts.HELMET, 0, 9, 2200, "무쇠로 만들어져 튼튼한 투구입니다.");
-        items[6] = new Item("스파르타의 투구", 6, Item.Parts.HELMET, 0, 15, 3500, "스파르타의 전사들이 사용했다는 전설의 투구입니다.");
+        _items[4] = new Item("수련자 두건", 4, Item.Parts.HELMET, 0, 5, 1000, "수련에 도움을 주는 두건입니다.");
+        _items[5] = new Item("무쇠 투구", 5, Item.Parts.HELMET, 0, 9, 2200, "무쇠로 만들어져 튼튼한 투구입니다.");
+        _items[6] = new Item("스파르타의 투구", 6, Item.Parts.HELMET, 0, 15, 3500, "스파르타의 전사들이 사용했다는 전설의 투구입니다.");
         //items[7] = new Item("낡은 ", 7, Item.Parts.HELMET, 0, 25, 10000, "누군가 입었던 것 같은 쫄쫄이입니다.");
 
-        items[8] = new Item("수련자 갑옷", 8, Item.Parts.CHESTPLATE, 0, 5, 1000, "수련에 도움을 주는 갑옷입니다.");
-        items[9] = new Item("무쇠 갑옷", 9, Item.Parts.CHESTPLATE, 0, 9, 2200, "무쇠로 만들어져 튼튼한 갑옷입니다.");
-        items[10] = new Item("스파르타의 갑옷", 10, Item.Parts.CHESTPLATE, 0, 15, 3500, "스파르타의 전사들이 사용했다는 전설의 갑옷입니다.");
-        items[11] = new Item("빨간 망토", 11, Item.Parts.CHESTPLATE, 0, 35, 30000, "누군가가 둘렀다던 빨간 망토입니다.");
+        _items[8] = new Item("수련자 갑옷", 8, Item.Parts.CHESTPLATE, 0, 5, 1000, "수련에 도움을 주는 갑옷입니다.");
+        _items[9] = new Item("무쇠 갑옷", 9, Item.Parts.CHESTPLATE, 0, 9, 2200, "무쇠로 만들어져 튼튼한 갑옷입니다.");
+        _items[10] = new Item("스파르타의 갑옷", 10, Item.Parts.CHESTPLATE, 0, 15, 3500, "스파르타의 전사들이 사용했다는 전설의 갑옷입니다.");
+        _items[11] = new Item("빨간 망토", 11, Item.Parts.CHESTPLATE, 0, 35, 30000, "누군가가 둘렀다던 빨간 망토입니다.");
 
         // 인벤토리 세팅
-        inventory = new List<Item>();
-        inventory.Add(items[0]); items[0].IsSold = true;
-        inventory.Add(items[9]); items[9].IsSold = true;
-        inventory.Add(items[10]); items[10].IsSold = true;
+        _inventory = new List<Item>();
+        _inventory.Add(_items[0]); _items[0].IsSold = true;
+        _inventory.Add(_items[9]); _items[9].IsSold = true;
+        _inventory.Add(_items[10]); _items[10].IsSold = true;
 
         // 상점 세팅
-        shop = new List<Item>();
-        foreach (var item in items)
+        _shop = new List<Item>();
+        foreach (var item in _items)
         {
             if (item != null)
-                shop.Add(item);
+                _shop.Add(item);
         }
     }
 
@@ -92,46 +88,46 @@ internal class Program
         Console.WriteLine("상태보기");
         Console.WriteLine("캐릭터의 정보를 표시합니다.");
         Console.WriteLine();
-        Console.WriteLine($"Lv.{player.Level}");
-        Console.WriteLine($"{player.Name} ({player.Job})");
+        Console.WriteLine($"Lv.{_player.Level}");
+        Console.WriteLine($"{_player.Name} ({_player.Job})");
 
-        Console.Write($"공격력: {player.Atk}");
+        Console.Write($"공격력: {_player.Atk}");
         // 장비 효과 계산
-        if (player.Equipment[(int)Item.Parts.WEAPON] != null)
-            Console.Write($" (+{player.Equipment[(int)Item.Parts.WEAPON].Stat})");
+        if (_player.Equipment[(int)Item.Parts.WEAPON] != null)
+            Console.Write($" (+{_player.Equipment[(int)Item.Parts.WEAPON].Stat})");
         Console.WriteLine();
 
-        Console.Write($"방어력: {player.Def}");
+        Console.Write($"방어력: {_player.Def}");
         // 장비 효과 계산
-        if (player.Equipment[(int)Item.Parts.CHESTPLATE] != null || player.Equipment[(int)Item.Parts.LEGGINGS] != null)
+        if (_player.Equipment[(int)Item.Parts.CHESTPLATE] != null || _player.Equipment[(int)Item.Parts.LEGGINGS] != null)
         {
             int defBonus = 0;
-            if (player.Equipment[(int)Item.Parts.CHESTPLATE] != null)
-                defBonus += player.Equipment[(int)Item.Parts.CHESTPLATE].Stat;
+            if (_player.Equipment[(int)Item.Parts.CHESTPLATE] != null)
+                defBonus += _player.Equipment[(int)Item.Parts.CHESTPLATE].Stat;
 
-            if (player.Equipment[(int)Item.Parts.LEGGINGS] != null)
-                defBonus += player.Equipment[(int)Item.Parts.LEGGINGS].Stat;
+            if (_player.Equipment[(int)Item.Parts.LEGGINGS] != null)
+                defBonus += _player.Equipment[(int)Item.Parts.LEGGINGS].Stat;
 
             Console.Write($" (+{defBonus})");
         }
         Console.WriteLine();
 
-        Console.Write($"체력: {player.Hp}");
+        Console.Write($"체력: {_player.Hp}");
         // 장비 효과 계산
-        if (player.Equipment[(int)Item.Parts.HELMET] != null || player.Equipment[(int)Item.Parts.BOOTS] != null)
+        if (_player.Equipment[(int)Item.Parts.HELMET] != null || _player.Equipment[(int)Item.Parts.BOOTS] != null)
         {
             int hpBonus = 0;
-            if (player.Equipment[(int)Item.Parts.HELMET] != null)
-                hpBonus += player.Equipment[(int)Item.Parts.HELMET].Stat;
+            if (_player.Equipment[(int)Item.Parts.HELMET] != null)
+                hpBonus += _player.Equipment[(int)Item.Parts.HELMET].Stat;
 
-            if (player.Equipment[(int)Item.Parts.BOOTS] != null)
-                hpBonus += player.Equipment[(int)Item.Parts.BOOTS].Stat;
+            if (_player.Equipment[(int)Item.Parts.BOOTS] != null)
+                hpBonus += _player.Equipment[(int)Item.Parts.BOOTS].Stat;
 
             Console.Write($" (+{hpBonus})");
         }
         Console.WriteLine();
 
-        Console.WriteLine($"Gold: {player.Gold} G");
+        Console.WriteLine($"Gold: {_player.Gold} G");
         Console.WriteLine();
         Console.WriteLine("0. 나가기");
 
@@ -152,7 +148,7 @@ internal class Program
         Console.WriteLine("보유 중인 아이템을 관리할 수 있습니다.");
         Console.WriteLine();
         Console.WriteLine("[아이템 목록]");
-        foreach (var item in inventory)
+        foreach (var item in _inventory)
         {
             item.PrintInfoAtInventory();
         }
@@ -184,20 +180,20 @@ internal class Program
         Console.WriteLine("보유 중인 아이템을 관리할 수 있습니다.");
         Console.WriteLine();
         Console.WriteLine("[아이템 목록]");
-        for (int i = 0; i < inventory.Count; i++)
+        for (int i = 0; i < _inventory.Count; i++)
         {
-            inventory[i].PrintInfoAtInventory(i+1);
+            _inventory[i].PrintInfoAtInventory(i+1);
         }
         Console.WriteLine();
         Console.WriteLine("0. 나가기");
 
-        int input = CheckValidInput(0, inventory.Count);
+        int input = CheckValidInput(0, _inventory.Count);
         if (input == 0)
             DisplayInventory();
         else
         {
             // 선택한 장비
-            var selectedItem = inventory[input - 1];
+            var selectedItem = _inventory[input - 1];
             //가 장착 중이라면
             if (selectedItem.IsEquipped)
             {
@@ -206,7 +202,7 @@ internal class Program
             //가 장착 중이 아니라면
             else {
                 // 해당 파트에 이미 착용 중인 장비가 있다면
-                if (player.Equipment[(int)selectedItem.Part] != null)
+                if (_player.Equipment[(int)selectedItem.Part] != null)
                     Unwear(selectedItem.Part);
 
                 Wear(selectedItem);
@@ -223,9 +219,9 @@ internal class Program
         Console.WriteLine("보유 중인 아이템을 관리할 수 있습니다.");
         Console.WriteLine();
         Console.WriteLine("[아이템 목록]");
-        for (int i = 0; i < inventory.Count; i++)
+        for (int i = 0; i < _inventory.Count; i++)
         {
-            inventory[i].PrintInfoAtInventory(i + 1);
+            _inventory[i].PrintInfoAtInventory(i + 1);
         }
         Console.WriteLine();
         Console.WriteLine("1. 이름");
@@ -243,22 +239,22 @@ internal class Program
                 // DisplayGameIntro();
                 break;
             case 1:
-                inventory = inventory.OrderBy(item => item.Name).ToList();
+                _inventory = _inventory.OrderBy(item => item.Name).ToList();
                 DisplaySorting(); break;
             case 2:
-                inventory = inventory.OrderBy(item => item.Part).ToList();
+                _inventory = _inventory.OrderBy(item => item.Part).ToList();
                 DisplaySorting(); break;
             case 3:
-                inventory = inventory.OrderByDescending(item => item.Stat).ToList();
+                _inventory = _inventory.OrderByDescending(item => item.Stat).ToList();
                 DisplaySorting(); break;
             case 4:
-                inventory = inventory.OrderBy(item => item.Price).ToList();
+                _inventory = _inventory.OrderBy(item => item.Price).ToList();
                 DisplaySorting(); break;
             case 5:
-                inventory = inventory.OrderByDescending(item => item.IsEquipped).ToList();
+                _inventory = _inventory.OrderByDescending(item => item.IsEquipped).ToList();
                 DisplaySorting(); break;
             case 6:
-                inventory = inventory.OrderByDescending(item => item.Level).ToList();
+                _inventory = _inventory.OrderByDescending(item => item.Level).ToList();
                 DisplaySorting(); break;
         }
     }
@@ -271,11 +267,11 @@ internal class Program
         Console.WriteLine("필요한 아이템을 얻을 수 있는 상점입니다");
         Console.WriteLine();
         Console.WriteLine("[보유 골드]");
-        Console.WriteLine($"{player.Gold} G");
+        Console.WriteLine($"{_player.Gold} G");
         Console.WriteLine();
         Console.WriteLine("[아이템 목록]");
 
-        foreach (var item in shop)
+        foreach (var item in _shop)
         {
             item.PrintInfoAtShop();
         }
@@ -328,18 +324,18 @@ internal class Program
         Console.WriteLine("필요한 아이템을 얻을 수 있는 상점입니다");
         Console.WriteLine();
         Console.WriteLine("[보유 골드]");
-        Console.WriteLine($"{player.Gold} G");
+        Console.WriteLine($"{_player.Gold} G");
         Console.WriteLine();
         Console.WriteLine("[아이템 목록]");
 
-        for (int i = 0; i < shop.Count; i++)
+        for (int i = 0; i < _shop.Count; i++)
         {
-            shop[i].PrintInfoAtShop(i+1);
+            _shop[i].PrintInfoAtShop(i+1);
         }
         Console.WriteLine();
         Console.WriteLine("0. 나가기");
 
-        InputLoopForShop(0, shop.Count);
+        InputLoopForShop(0, _shop.Count);
         DisplayShop();
     }
 
@@ -351,17 +347,17 @@ internal class Program
         Console.WriteLine("필요한 아이템을 얻을 수 있는 상점입니다.");
         Console.WriteLine();
         Console.WriteLine("[보유 골드]");
-        Console.WriteLine($"{player.Gold} G");
+        Console.WriteLine($"{_player.Gold} G");
         Console.WriteLine();
         Console.WriteLine("[아이템 목록]");
-        for (int i = 0; i < inventory.Count; i++)
+        for (int i = 0; i < _inventory.Count; i++)
         {
-            inventory[i].PrintInfoAtShop(i + 1, true);
+            _inventory[i].PrintInfoAtShop(i + 1, true);
         }
         Console.WriteLine();
         Console.WriteLine("0. 나가기");
 
-        InputLoopForShop(0, shop.Count, true);
+        InputLoopForShop(0, _shop.Count, true);
         DisplayShop();
     }
 
@@ -385,7 +381,7 @@ internal class Program
                     if(!sellMode)
                     {   
                         // 선택한 장비
-                        var selectedItem = shop[ret - 1];
+                        var selectedItem = _shop[ret - 1];
                         //가 이미 구매됐다면
                         if (selectedItem.IsSold)
                             Console.WriteLine("이미 구매한 아이템입니다.");
@@ -393,7 +389,7 @@ internal class Program
                         else
                         {
                             // 돈이 충분하다면
-                            if (player.Gold >= selectedItem.Price)
+                            if (_player.Gold >= selectedItem.Price)
                             {
                                 Console.WriteLine("구매를 완료했습니다.");
                                 BuyItem(selectedItem);
@@ -407,7 +403,7 @@ internal class Program
                     else
                     {
                         // 선택한 장비
-                        var selectedItem = inventory[ret - 1];
+                        var selectedItem = _inventory[ret - 1];
 
                         // 가 장착 중이라면
                         if (selectedItem.IsEquipped)
@@ -437,28 +433,28 @@ internal class Program
 
     static void Wear(Item item)
     {
-        player.Equipment[(int)item.Part] = item;
+        _player.Equipment[(int)item.Part] = item;
         item.IsEquipped = true;
     }
 
     static void Unwear(Item.Parts part)
     {
-        player.Equipment[(int)part].IsEquipped = false;
-        player.Equipment[(int)part] = null;
+        _player.Equipment[(int)part].IsEquipped = false;
+        _player.Equipment[(int)part] = null;
     }
 
     static void BuyItem(Item item)
     {
-        player.Gold -= item.Price;
-        inventory.Add(item);
+        _player.Gold -= item.Price;
+        _inventory.Add(item);
         item.IsSold = true;
         RefreshGoldAndList(false);
     }
 
     static void SellItem(Item item)
     {
-        player.Gold += (int)(item.Price * 0.85f);
-        inventory.Remove(item);
+        _player.Gold += (int)(item.Price * 0.85f);
+        _inventory.Remove(item);
         item.IsSold = false;
         RefreshGoldAndList(true);
     }
@@ -468,23 +464,23 @@ internal class Program
         var currentCursor = Console.GetCursorPosition();
         Console.SetCursorPosition(0, 4);
         Console.Write("                                   \r");
-        Console.Write($"{player.Gold} G");
+        Console.Write($"{_player.Gold} G");
         Console.SetCursorPosition(0, 7);
 
         if(!sellMode)
         {
-            for (int i = 0; i < shop.Count; i++)
+            for (int i = 0; i < _shop.Count; i++)
             {
                 ClearLine();
-                shop[i].PrintInfoAtShop(i + 1, sellMode);
+                _shop[i].PrintInfoAtShop(i + 1, sellMode);
             }
         }
         else
         {
-            for (int i = 0; i < inventory.Count; i++)
+            for (int i = 0; i < _inventory.Count; i++)
             {
                 ClearLine();
-                inventory[i].PrintInfoAtShop(i + 1, sellMode);
+                _inventory[i].PrintInfoAtShop(i + 1, sellMode);
             }
             ClearLine();
         }
@@ -501,8 +497,6 @@ internal class Program
         Console.Write("\r");
     }
 }
-
-
 public class Character
 {
     public string Name { get; }
