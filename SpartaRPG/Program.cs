@@ -12,7 +12,8 @@ internal class Program
     static void Main(string[] args)
     {
         GameDataSetting();
-        DisplayGameIntro();
+        while(true) { DisplayGameIntro(); }
+        
     }
 
     static void GameDataSetting()
@@ -138,7 +139,7 @@ internal class Program
         switch (input)
         {
             case 0:
-                DisplayGameIntro();
+                // DisplayGameIntro();
                 break;
         }
     }
@@ -164,13 +165,13 @@ internal class Program
         switch (input)
         {
             case 0:
-                DisplayGameIntro();
+                // DisplayGameIntro();
                 break;
             case 1:
                 DisplayEquipment();
                 break;
             case 2:
-                DisplayInventorySorting();
+                DisplaySorting();
                 break;
         }
     }
@@ -214,7 +215,7 @@ internal class Program
         }
     }
 
-    static void DisplayInventorySorting()
+    static void DisplaySorting()
     {
         Console.Clear();
 
@@ -239,25 +240,26 @@ internal class Program
         switch(input)
         {
             case 0:
-                DisplayGameIntro(); break;
+                // DisplayGameIntro();
+                break;
             case 1:
                 inventory = inventory.OrderBy(item => item.Name).ToList();
-                DisplayInventorySorting(); break;
+                DisplaySorting(); break;
             case 2:
                 inventory = inventory.OrderBy(item => item.Part).ToList();
-                DisplayInventorySorting(); break;
+                DisplaySorting(); break;
             case 3:
                 inventory = inventory.OrderByDescending(item => item.Stat).ToList();
-                DisplayInventorySorting(); break;
+                DisplaySorting(); break;
             case 4:
                 inventory = inventory.OrderBy(item => item.Price).ToList();
-                DisplayInventorySorting(); break;
+                DisplaySorting(); break;
             case 5:
                 inventory = inventory.OrderByDescending(item => item.IsEquipped).ToList();
-                DisplayInventorySorting(); break;
+                DisplaySorting(); break;
             case 6:
                 inventory = inventory.OrderByDescending(item => item.Level).ToList();
-                DisplayInventorySorting(); break;
+                DisplaySorting(); break;
         }
     }
 
@@ -286,7 +288,7 @@ internal class Program
         switch (input)
         {
             case 0:
-                DisplayGameIntro();
+                // DisplayGameIntro();
                 break;
             case 1:
                 DisplayBuyItem();
