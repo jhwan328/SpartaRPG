@@ -1,6 +1,9 @@
 ﻿using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using SpartaRPG.Classes;
+using static SpartaRPG.Managers.SceneManager;
+using static System.Net.Mime.MediaTypeNames;
+using System.IO;
 
 namespace SpartaRPG.Managers
 {
@@ -11,17 +14,28 @@ namespace SpartaRPG.Managers
         public Character Player { get; private set; }
         public List<Item> Inventory { get; private set; }
         public List<Item> Shop { get; private set; }
+        public List<Item> SortedItems { get; set; }
         public List<Dungeon> Dungeons { get; private set; }
 
 
         private Item[] _items = new Item[50];
+        private string? _id;
 
-        private string _path = "data.json";
+        private string _savePath = @"../../../Save";
 
+        public DataManager()
+        {
+            SortedItems = new List<Item>();
+            Inventory = new List<Item>();
+            Shop = new List<Item>();
+            Dungeons = new List<Dungeon>();
+        }
 
 
         public void SaveData()
         {
+            if (Player == null) return;
+
             int[] inventoryIds = new int[Inventory.Count];
 
             JObject configData = new JObject(
@@ -52,14 +66,28 @@ namespace SpartaRPG.Managers
             if (Player.Equipments[(int)Item.Parts.BOOTS] != null)
                 configData.Add(new JProperty("Boots", Player.Equipments[(int)Item.Parts.BOOTS].Id));
 
-            File.WriteAllText(_path, configData.ToString());
+            using (FileStream fs = File.Open(_savePath, FileMode.Create))
+            {
+                using (StreamWriter writer = new StreamWriter(fs))
+                {
+                    writer.Write(configData.ToString());
+                }
+            }
         }
 
-        public bool LoadData()
+        public void LoadData()
         {
-            if (File.Exists(_path)) return false;
+            string jsonContent;
 
-            dynamic data = JsonConvert.DeserializeObject(File.ReadAllText(_path));
+            using (FileStream fs = File.Open(_savePath, FileMode.Open))
+            {
+                using (StreamReader reader = new StreamReader(fs))
+                {
+                    jsonContent = reader.ReadToEnd();
+                }
+            }
+
+            dynamic data = JsonConvert.DeserializeObject(jsonContent);
 
             Player = new Character(
                 data["Name"].ToString(),
@@ -76,7 +104,8 @@ namespace SpartaRPG.Managers
             Inventory.Clear();
             foreach (var id in data["inventory"])
             {
-                Inventory.Add(_items[(int)id]); _items[(int)id].IsSold = true;
+                Inventory.Add(_items[(int)id]);
+                Shop.Remove(_items[(int)id]);
             }
 
             if (data["Weapon"] != null)
@@ -106,8 +135,6 @@ namespace SpartaRPG.Managers
             }
 
             Player.ChangeHP((int)data["CurrentHp"] - Player.MaxHp);
-
-            return true;
         }
 
         public void Wear(Item item)
@@ -126,28 +153,22 @@ namespace SpartaRPG.Managers
         {
             Player.Gold -= item.Price;
             Inventory.Add(item);
-            item.IsSold = true;
+            Shop.Remove(item);
             GameManager.Instance.UIManager.PrintGold();
-            GameManager.Instance.UIManager.PrintShopItems(true);
+            GameManager.Instance.UIManager.PrintItems();
         }
 
         public void SellItem(Item item)
         {
             Player.Gold += (int)(item.Price * 0.85f);
             Inventory.Remove(item);
-            item.IsSold = false;
+            Shop.Add(item);
             GameManager.Instance.UIManager.PrintGold();
-            GameManager.Instance.UIManager.PrintInventoryItems(true);
+            GameManager.Instance.UIManager.PrintItems();
         }
+
         public void GameDataSetting()
         {
-            // 캐릭터 정보 세팅
-            Character warrior = new Character("기현빈", "전사", 1, 10, 5, 100, 1500);
-            Character archer = new Character("기현빈", "궁수", 1, 15, 3, 80, 1500);
-            Character wizard = new Character("기현빈", "마법사", 1, 13, 4, 90, 1500);
-
-            Player = warrior;
-
             // 아이템 정보 세팅
             _items[0] = new Item("낡은 검", 0, Item.Parts.WEAPON, 0, 2, 600, "쉽게 볼 수 있는 낡은 검 입니다.");
             _items[1] = new Item("청동 도끼", 1, Item.Parts.WEAPON, 0, 5, 1500, "어디선가 사용됐던 것 같은 도끼입니다.");
@@ -164,11 +185,7 @@ namespace SpartaRPG.Managers
             _items[10] = new Item("스파르타의 갑옷", 10, Item.Parts.CHESTPLATE, 0, 15, 3500, "스파르타의 전사들이 사용했다는 전설의 갑옷입니다.");
             _items[11] = new Item("빨간 망토", 11, Item.Parts.CHESTPLATE, 0, 35, 30000, "누군가가 둘렀다던 빨간 망토입니다.");
 
-            // 인벤토리 세팅
-            Inventory = new List<Item>();
-
             // 상점 세팅
-            Shop = new List<Item>();
             foreach (var item in _items)
             {
                 if (item != null)
@@ -176,18 +193,243 @@ namespace SpartaRPG.Managers
             }
 
             // 던전 세팅
-            Dungeons = new List<Dungeon>();
             Dungeons.Add(new Dungeon(Player, "쉬운 던전", 5, 1000));
             Dungeons.Add(new Dungeon(Player, "일반 던전", 11, 1700));
             Dungeons.Add(new Dungeon(Player, "어려운 던전", 17, 2500));
+        }
 
+        public void SortItems(List<Item> itemList)
+        {
+            SortedItems.Clear();
 
-            // 자동 로드, 데이터가 없으면 기본 아이템 지급
-            if (!LoadData())
+            foreach (Item item in itemList)
             {
-                Inventory.Add(_items[0]); _items[0].IsSold = true;
-                Inventory.Add(_items[9]); _items[9].IsSold = true;
+                if (item.Part == GameManager.Instance.UIManager.Category
+                    || GameManager.Instance.UIManager.Category == null)
+                {
+                    SortedItems.Add(item);
+                }
             }
+        }
+
+        public void SortInventory(int num)
+        {
+            switch (num)
+            {
+                case 1:
+                    Inventory = Inventory.OrderBy(item => item.Name).ToList();
+                    break;
+                case 2:
+                    Inventory = Inventory.OrderByDescending(item => item.Stat).ToList();
+                    break;
+                case 3:
+                    Inventory = Inventory.OrderBy(item => item.Price).ToList();
+                    break;
+                case 4:
+                    Inventory = Inventory.OrderByDescending(item => item.IsEquipped).ToList();
+                    break;
+                case 5:
+                    Inventory = Inventory.OrderByDescending(item => item.Level).ToList();
+                    break;
+            }
+        }
+
+        public int GetAtkBonus(bool print = true)
+        {
+            int atkBonus = 0;
+
+            if (Player.Equipments[(int)Item.Parts.WEAPON] != null)
+            {
+                atkBonus = Player.Equipments[(int)Item.Parts.WEAPON].Stat;
+            }
+
+            return atkBonus;
+        }
+
+        public int GetDefBonus(bool print = true)
+        {
+            int defBonus = 0;
+
+            if (Player.Equipments[(int)Item.Parts.CHESTPLATE] != null)
+                defBonus += Player.Equipments[(int)Item.Parts.CHESTPLATE].Stat;
+
+            if (Player.Equipments[(int)Item.Parts.LEGGINGS] != null)
+                defBonus += Player.Equipments[(int)Item.Parts.LEGGINGS].Stat;
+
+            return defBonus;
+        }
+
+        public int GetHpBonus(bool print = true)
+        {
+            int hpBonus = 0;
+
+            if (Player.Equipments[(int)Item.Parts.HELMET] != null)
+                hpBonus += Player.Equipments[(int)Item.Parts.HELMET].Stat;
+
+            if (Player.Equipments[(int)Item.Parts.BOOTS] != null)
+                hpBonus += Player.Equipments[(int)Item.Parts.BOOTS].Stat;
+
+            return hpBonus;
+        }
+
+        public void ExploreDungeon(int stage)
+        {
+            Random rnd = new Random();
+            Dungeon dungeon = Dungeons[stage - 1];
+            UIManager ui = GameManager.Instance.UIManager;
+            bool clear = false;
+
+            var iHp = Player.CurrentHp;
+            var iGold = Player.Gold;
+
+            if (Player.Def + GetDefBonus() < dungeon.Condition && rnd.Next(0, 100) < 40)
+            {
+                clear = false;
+
+                int damage = rnd.Next(20, 36) - (Player.Def + GetDefBonus() - dungeon.Condition);
+                if (damage < 0) damage = 0;
+                Player.ChangeHP(-(int)(damage / 2));
+            }
+            else
+            {
+                clear = true;
+                int damage = rnd.Next(20, 36) - (Player.Def + GetDefBonus() - dungeon.Condition);
+                if (damage < 0) damage = 0;
+                Player.ChangeHP(-damage);
+
+                int rewardGold = (int)(dungeon.Reward[0]
+                    * (100 + rnd.Next(Player.Atk + GetAtkBonus(), 2 * Player.Atk + GetAtkBonus() + 1)) / 100);
+                Player.Gold += rewardGold;
+            }
+
+            ui.ClearLog();
+            if (clear) ui.AddLog($"{dungeon.Name} 클리어");
+            else ui.AddLog($"{dungeon.Name} 도전 실패");
+
+            ui.AddLog($"체력 {iHp} -> {Player.CurrentHp}");
+            if (clear)
+            {
+                ui.AddLog($"소지금 {iGold} -> {Player.Gold}");
+                ui.AddLog("");
+
+                if (Player.Level <= ++Player.Exp)
+                {
+                    Player.Exp -= Player.Level;
+
+                    ui.AddLog("레벨이 올랐습니다.");
+                    ui.AddLog($"레벨 {Player.Level} -> {++Player.Level}");
+                    if (Player.Level % 2 == 1)
+                        ui.AddLog($"공격력 {Player.Atk} -> {++Player.Atk}");
+                    ui.AddLog($"방어력 {Player.Def} -> {++Player.Def}");
+                }
+            }
+        }
+
+        public void RestPlayer()
+        {
+            UIManager ui = GameManager.Instance.UIManager;
+
+            if(Player.Gold >= 500)
+            {
+                ui.AddLog(".");
+                Thread.Sleep(500);
+                ui.AddLog(".");
+                Thread.Sleep(500);
+                ui.AddLog(".");
+
+                Player.Gold -= 500;
+                Player.ChangeHP(100);
+
+                ui.AddLog("휴식을 완료했습니다.");
+            }
+            else
+            {
+                ui.AddLog("소지금이 부족합니다.");
+            }
+
+        } 
+
+        public void CreateId()
+        {
+            UIManager ui = GameManager.Instance.UIManager;
+
+            while(true)
+            {
+                ui.SetCursorPositionForOption();
+                _id = Console.ReadLine();
+                if (_id != null)
+                {
+                    string savePath = Path.Combine(_savePath, $"{_id}.json");
+
+                    if (File.Exists(savePath))
+                    {
+                        ui.AddLog("존재하는 ID입니다.");
+                        ui.AddLog("ID 생성에 실패했습니다.");
+                        return;
+                    }
+                    else
+                    {
+                        _savePath = savePath;
+                        ui.AddLog("ID 생성에 성공했습니다.");
+                        ui.AddLog("닉네임을 입력하세요.");
+
+                        while (true)
+                        {
+                            ui.SetCursorPositionForOption();
+                            string? name = Console.ReadLine();
+                            if (name != null)
+                            {
+                                Player = new Character(name, "전사", 1, 10, 5, 100, 1500);
+                                GetBasicItem();
+                                SaveData();
+                                GameManager.Instance.SceneManager.Scene = Scenes.TOWN;
+                                return;
+                            }
+                            ui.AddLog("잘못된 입력입니다.");
+                        }
+                    }
+                }
+                ui.AddLog("잘못된 입력입니다.");
+            }
+        }
+
+        public void LoginId()
+        {
+            UIManager ui = GameManager.Instance.UIManager;
+
+            while (true)
+            {
+                ui.SetCursorPositionForOption();
+                _id = Console.ReadLine();
+                if (_id != null)
+                {
+                    string savePath = Path.Combine(_savePath, $"{_id}.json");
+
+                    if (File.Exists(savePath))
+                    {
+                        _savePath = savePath;
+                        GameManager.Instance.SceneManager.Scene = Scenes.TOWN;
+                        LoadData();
+                        ui.AddLog("로그인에 성공했습니다");
+                        return;
+                    }
+                    else
+                    {
+                        ui.AddLog("존재하지 않는 ID입니다.");
+                        ui.AddLog("로그인에 실패했습니다");
+                        return;
+                    }
+                }
+                ui.AddLog("잘못된 입력입니다.");
+            }
+        }
+
+        private void GetBasicItem()
+        {
+            Inventory.Add(_items[0]);
+            Shop.Remove(_items[0]);
+            Inventory.Add(_items[9]);
+            Shop.Remove(_items[9]);
         }
     }
 }

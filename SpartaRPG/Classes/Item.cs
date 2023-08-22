@@ -18,9 +18,8 @@
         public int Price { get; }
         public int Level { get; set; }
         public bool IsEquipped { get; set; }
-        public bool IsSold { get; set; }
 
-        public Item(string name, int id, Parts part, int level, int stat, int price, string description, bool isEquipped = false, bool isSold = false)
+        public Item(string name, int id, Parts part, int level, int stat, int price, string description, bool isEquipped = false)
         {
             Name = name;
             Id = id;
@@ -30,10 +29,9 @@
             Price = price;
             Level = level;
             IsEquipped = isEquipped;
-            IsSold = isSold;
         }
 
-        public void PrintInfo(int num = 0)
+        public void PrintInfo(bool showPrice, int num = 0, float sale = 1)
         {
             string equip = (IsEquipped) ? "[E]" : "";
             string printNum = (num == 0) ? "" : $"{num} ";
@@ -62,25 +60,9 @@
             Console.SetCursorPosition(25, Console.GetCursorPosition().Top);
             Console.Write($"| {statByPart} + {Stat}");
             Console.SetCursorPosition(40, Console.GetCursorPosition().Top);
-            Console.Write($"| {Description}");
-            Console.SetCursorPosition(100, Console.GetCursorPosition().Top);
-        }
 
-        public void PrintInfoAtInventory(int num = 0)
-        {
-            PrintInfo(num);
-            Console.Write('\n');
-        }
-
-        public void PrintInfoAtShop(int num = 0, bool sellMode = false)
-        {
-            PrintInfo(num);
-            if (!sellMode)
-            {
-                if (IsSold) Console.WriteLine("| 구매 완료");
-                else Console.WriteLine($"| {Price}G");
-            }
-            else Console.WriteLine($"| {(int)(Price * 0.85f)}G");
+            if(showPrice) Console.WriteLine($"| {((int)(Price * sale)).ToString().PadLeft(8, ' ')} G");
+            else Console.Write($"| {Description}\n");
         }
     }
 }

@@ -1,24 +1,34 @@
 ﻿using SpartaRPG.Classes;
+using System.Numerics;
+using System.Text;
+using static SpartaRPG.Managers.SceneManager;
 
 namespace SpartaRPG.Managers
 {
     internal class UIManager
     {   
         public GameManager GameManager;
-
-        private Item.Parts? _category;
+        public Item.Parts? Category { get; private set; }
 
         private int _itemsTopPostion = 7;
 
         private int _categoryTopPostion = 3;
 
-        private int _goldLeftPostion = 91;
+        private int _goldLeftPostion = 64;
 
         private int _goldTopPostion = 3;
 
+        public List<string> Logs;
+
+
+        private int _logLeft, _logTop;
+
         public UIManager()
         {
+            Console.Title = "스파르타 RPG";
             Console.SetWindowSize(120, 30);
+
+            Logs = new List<string>();
         }
 
         public void ClearLine()
@@ -40,79 +50,6 @@ namespace SpartaRPG.Managers
             Console.ForegroundColor = currentColor;
         }
 
-        public int PrintAtk(bool print = true)
-        {
-            var player = GameManager.Instance.DataManager.Player;
-
-            int atk = player.Atk;
-            int atkBonus = 0;
-
-            // 장비 효과 계산
-            if (player.Equipments[(int)Item.Parts.WEAPON] != null)
-            {
-                atkBonus = player.Equipments[(int)Item.Parts.WEAPON].Stat;
-            }
-
-            if (print)
-            {
-                Console.Write($"공격력: {atk}");
-                if (atkBonus != 0) Console.Write($" (+{atkBonus})");
-                Console.WriteLine();
-            }
-
-
-            return atk + atkBonus;
-        }
-
-        public int PrintDef(bool print = true)
-        {
-            var player = GameManager.Instance.DataManager.Player;
-
-            int def = player.Def;
-            int defBonus = 0;
-
-
-            // 장비 효과 계산
-            if (player.Equipments[(int)Item.Parts.CHESTPLATE] != null)
-                defBonus += player.Equipments[(int)Item.Parts.CHESTPLATE].Stat;
-
-            if (player.Equipments[(int)Item.Parts.LEGGINGS] != null)
-                defBonus += player.Equipments[(int)Item.Parts.LEGGINGS].Stat;
-
-            if (print)
-            {
-                Console.Write($"방어력: {def}");
-                if (defBonus != 0) Console.Write($" (+{defBonus})");
-                Console.WriteLine();
-            }
-
-            return def + defBonus;
-        }
-
-        public int PrintHp(bool print = true)
-        {
-            var player = GameManager.Instance.DataManager.Player;
-
-            int hp = player.MaxHp;
-            int hpBonus = 0;
-
-            // 장비 효과 계산
-            if (player.Equipments[(int)Item.Parts.HELMET] != null)
-                hpBonus += player.Equipments[(int)Item.Parts.HELMET].Stat;
-
-            if (player.Equipments[(int)Item.Parts.BOOTS] != null)
-                hpBonus += player.Equipments[(int)Item.Parts.BOOTS].Stat;
-
-            if (print)
-            {
-                Console.Write($"체력: {player.CurrentHp} / {hp}");
-                if (hpBonus != 0) Console.Write($" (+{hpBonus})");
-                Console.WriteLine();
-            }
-
-            return hp + hpBonus;
-        }
-
         public void PrintItemCategories(bool forRefresh = false)
         {
             var currentCursor = Console.GetCursorPosition();
@@ -121,7 +58,7 @@ namespace SpartaRPG.Managers
 
             Console.WriteLine("┌───────┐───────┐───────┐───────┐───────┐───────┐");
             Console.WriteLine("│  전체 │  무기 │  투구 │  갑옷 │  바지 │  신발 │");
-            switch (_category)
+            switch (Category)
             {
                 case null:
                     Console.Write("┘       └─────────────────────────────────────────────");
@@ -162,66 +99,381 @@ namespace SpartaRPG.Managers
             Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
         }
 
+        public void PrintLevel()
+        {
+            var currentCursor = Console.GetCursorPosition();
+            var player = GameManager.Instance.DataManager.Player;
+
+            int fillExpBar = player.Exp * 8 / player.Level;
+            if (fillExpBar >= 8) fillExpBar = 8;
+
+            Console.SetCursorPosition(0, _goldTopPostion);
+            Console.Write("┌─────────────────────────┐");
+            Console.SetCursorPosition(0, _goldTopPostion + 1);
+            Console.Write($"│ Lv {player.Level.ToString().PadLeft(3, ' ')} |");
+            Console.Write("".PadRight(fillExpBar, '■'));
+            Console.Write("".PadRight(8 - fillExpBar, '□'));
+            Console.Write("│");
+            Console.SetCursorPosition(0, _goldTopPostion + 2);
+            Console.Write("├─────────────────────────┴");
+
+            Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
+        }
+
         public void PrintDescription(string description)
         {
             Console.Write($"{description}\n\n");
         }
 
-        public void PrintOption(List<string>? option)
+        public void PrintItems()
         {
-            if (option == null) return;
-            foreach(var opt in option) Console.WriteLine(opt.ToString());
-        }
-
-        public void PrintShopItems(bool printNum)
-        {
-            var shop = GameManager.Instance.DataManager.Shop;
             var currentCursor = Console.GetCursorPosition();
 
             Console.SetCursorPosition(0, _itemsTopPostion);
 
-            for (int i = 0; i < shop.Count; i++)
+            DataManager dm = GameManager.Instance.DataManager;
+            bool showPrice = false, printNum = false;
+            float sale = 1;
+            switch (GameManager.Instance.SceneManager.Scene)
             {
-                var item = shop[i];
-
-                if (item.Part == _category || _category == null)
-                {
-                    ClearLine();
-                    if (printNum) item.PrintInfoAtShop(i + 1);
-                    else item.PrintInfoAtShop();
-                }
+                case Scenes.INVENTORY_MAIN:
+                    dm.SortItems(dm.Inventory);
+                    showPrice = false;
+                    printNum = false;
+                    break;
+                case Scenes.INVENTORY_EQUIP:
+                    dm.SortItems(dm.Inventory);
+                    showPrice = false;
+                    printNum = true;
+                    break;
+                case Scenes.INVENTORY_SORT:
+                    dm.SortItems(dm.Inventory);
+                    showPrice = false;
+                    printNum = false;
+                    break;
+                case Scenes.SHOP_MAIN:
+                    dm.SortItems(dm.Shop);
+                    showPrice = true;
+                    printNum = false;
+                    break;
+                case Scenes.SHOP_BUY:
+                    dm.SortItems(dm.Shop);
+                    showPrice = true;
+                    printNum = true;
+                    break;
+                case Scenes.SHOP_SELL:
+                    dm.SortItems(dm.Inventory);
+                    showPrice = true;
+                    printNum = true;
+                    sale = 0.85f;
+                    break;
             }
 
-            Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
-        }
-
-        public void PrintInventoryItems(bool printNum)
-        {
-            var inventory = GameManager.Instance.DataManager.Inventory;
-            var currentCursor = Console.GetCursorPosition();
-
-            Console.SetCursorPosition(0, _itemsTopPostion);
-
-            for (int i = 0; i < inventory.Count; i++)
+            for (int i = 0; i < dm.SortedItems.Count; i++)
             {
-                var item = inventory[i];
+                var item = dm.SortedItems[i];
 
-                if(item.Part == _category || _category == null)
-                {
-                    ClearLine();
-                    if (printNum) item.PrintInfoAtInventory(i + 1);
-                    else item.PrintInfoAtInventory();
-                }
-                
+                ClearLine();
+                if (printNum) item.PrintInfo(showPrice, i + 1, sale);
+                else item.PrintInfo(showPrice);
             }
+
             ClearLine();
 
             Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
         }
 
-        public void PrintExit(int exitNum = 0)
+        public bool ShiftCategory(string input)
         {
-            Console.Write($"{exitNum}. 나가기");
+            if (input == "[")
+            {
+                if (Category == null)
+                    Category = (Item.Parts)(Enum.GetValues(typeof(Item.Parts)).Length - 1);
+                else if (Category == (Item.Parts)0)
+                    Category = null;
+                else Category--;
+
+                return true;
+            }
+            else if (input == "]")
+            {
+                if (Category == null)
+                    Category = (Item.Parts)0;
+                else if (Category == (Item.Parts)(Enum.GetValues(typeof(Item.Parts)).Length - 1))
+                    Category = null;
+                else Category++;
+
+                return true;
+            }
+
+            return false;
+        }
+
+        private void MakeUIContainer(int left, int top, int right, int bottom)
+        {   //┌ ─ ┐ └ ┘ │
+            if (left < 0 || top < 0 || --right > Console.WindowWidth || --bottom > Console.WindowHeight) return;
+
+            Console.SetCursorPosition(left, top);
+            Console.Write("┌".PadRight(right - left - 1, '─'));
+            Console.Write("┐");
+
+            for (int i = top + 1; i < bottom; i++)
+            {
+                Console.SetCursorPosition(left, i);
+                Console.Write("│".PadRight(right - left - 1, ' '));
+
+                Console.SetCursorPosition(right - 1, i);
+                Console.Write("│");
+            }
+            
+
+            Console.SetCursorPosition(left, bottom);
+            Console.Write("└".PadRight(right - left - 1, '─'));
+            Console.Write("┘");
+        }
+
+        public void MakeOptionBox(List<string>? option)
+        {
+            var currentCursor = Console.GetCursorPosition();
+
+            int left = 0, top = 20, right = 92, bottom = 30;
+
+            MakeUIContainer(left, top, right, bottom);
+
+            if (option != null)
+            {
+                int tempLeft = left, tempTop = top;
+
+                for (int i = 0; i < option.Count; i++)
+                {
+                    Console.SetCursorPosition(tempLeft + 2, tempTop + 2);
+                    Console.Write(option[i].ToString());
+
+                    tempLeft += right / 3;
+                    if(tempLeft >= right - 5)
+                    {
+                        tempLeft = left;
+                        tempTop += 2;
+                    }
+
+                }
+            }
+
+            Console.SetCursorPosition(left + 2, bottom - 4);
+            Console.Write("".PadRight(right - left - 4, '-'));
+
+            Console.SetCursorPosition(left + 2, bottom - 2);
+            Console.Write(">> ");
+
+            Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
+
+        }
+
+        public void SetCursorPositionForOption()
+        {
+            Console.SetCursorPosition(5, 28);
+            Console.Write("                      ");
+            Console.SetCursorPosition(5, 28);
+        }
+
+        public void MakeLogBox()
+        {
+            var currentCursor = Console.GetCursorPosition();
+
+            int left = 92, top = 0, right = 120, bottom = 30;
+            _logLeft = left + 2;  _logTop = top + 2;
+
+            MakeUIContainer(left, top, right, bottom);
+
+            foreach (string log in Logs)
+            {
+                PrintLog(log);
+            }
+
+            Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
+
+        }
+
+        public void AddLog(string log)
+        {
+            if (_logTop > 20) {
+                Logs.RemoveRange(0, 5);
+                MakeLogBox();
+            }
+
+            Logs.Add(log);
+            PrintLog(log);
+        }
+
+        public void PrintLog(string log)
+        {
+            var currentCursor = Console.GetCursorPosition();
+
+            Console.SetCursorPosition(_logLeft, _logTop);
+
+            int len = Encoding.Default.GetBytes(log).Length;
+            if (len > 33)
+            {
+                for(int i = 1; i <= 25; i++)
+                {
+                    string str = log.Substring(log.Length - i, 1);
+
+                    len -= Encoding.Default.GetBytes(str).Length;
+
+                    if(len <= 33)
+                    {
+                        Console.Write(log.Substring(0, log.Length - i));
+
+                        Console.SetCursorPosition(_logLeft, ++_logTop);
+                        Console.Write(log.Substring(log.Length - i, i));
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                Console.Write(log);
+            }
+
+            _logTop += 2;
+
+            Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
+        }
+        
+        public void ClearLog()
+        {
+            var currentCursor = Console.GetCursorPosition();
+
+            Console.SetCursorPosition(_logLeft, _logTop);
+
+            Logs.Clear();
+            MakeLogBox();
+
+            Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
+        }
+
+        public void MakeStatusBox()
+        {
+            var currentCursor = Console.GetCursorPosition();
+
+            int left = 0, top = 5, right = 92, bottom = 20;
+
+            MakeUIContainer(left, top, 31, bottom);
+            MakeUIContainer(29, top, 62, bottom);
+            MakeUIContainer(60, top, right, bottom);
+
+            Console.SetCursorPosition(_goldLeftPostion, top);
+            Console.Write("┴");
+            Console.SetCursorPosition(right - 2, top);
+            Console.Write("┤");
+
+            PrintEquipments();
+            PrintStat();
+
+            Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
+        }
+
+        public void PrintEquipments()
+        {
+            var currentCursor = Console.GetCursorPosition();
+
+            Console.SetCursorPosition(9, 6);
+            Console.Write("< 현재 장비 >");
+
+            var equipments = GameManager.Instance.DataManager.Player.Equipments;
+            string name;
+
+            if (equipments[(int)Item.Parts.WEAPON] == null) name = "------- 없음 -------";
+            else name = equipments[(int)Item.Parts.WEAPON].Name;
+            Console.SetCursorPosition(2, 9);
+            Console.Write($"무기  {name}");
+
+            if (equipments[(int)Item.Parts.HELMET] == null) name = "------- 없음 -------";
+            else name = equipments[(int)Item.Parts.HELMET].Name;
+            Console.SetCursorPosition(2, 11);
+            Console.Write($"투구  {name}");
+
+            if (equipments[(int)Item.Parts.CHESTPLATE] == null) name = "------- 없음 -------";
+            else name = equipments[(int)Item.Parts.CHESTPLATE].Name;
+            Console.SetCursorPosition(2, 13);
+            Console.Write($"갑옷  {name}");
+
+            if (equipments[(int)Item.Parts.LEGGINGS] == null) name = "------- 없음 -------";
+            else name = equipments[(int)Item.Parts.LEGGINGS].Name;
+            Console.SetCursorPosition(2, 15);
+            Console.Write($"바지  {name}");
+
+            if (equipments[(int)Item.Parts.BOOTS] == null) name = "------- 없음 -------";
+            else name = equipments[(int)Item.Parts.BOOTS].Name;
+            Console.SetCursorPosition(2, 17);
+            Console.Write($"신발  {name}");
+
+
+            Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
+        }
+
+        public void PrintStat()
+        {
+            var currentCursor = Console.GetCursorPosition();
+            var dm = GameManager.Instance.DataManager;
+
+            Console.SetCursorPosition(38, 6);
+            Console.Write("< 현재 능력치 >");
+
+            Console.SetCursorPosition(31, 9);
+            Console.Write($"이  름  {dm.Player.Name}");
+
+            Console.SetCursorPosition(31, 11);
+            Console.Write($"직  업  {dm.Player.Job}");
+
+            Console.SetCursorPosition(31, 13);
+            Console.Write($"체  력  {dm.Player.CurrentHp} / {dm.Player.MaxHp}(+{dm.GetHpBonus()})");
+
+            Console.SetCursorPosition(31, 15);
+            Console.Write($"공격력  {dm.Player.Atk}(+{dm.GetAtkBonus()})");
+
+            Console.SetCursorPosition(31, 17);
+            Console.Write($"방어력  {dm.Player.Def}(+{dm.GetDefBonus()})");
+
+            Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
+        }
+
+        public void MakeDungeonBox()
+        {
+            var currentCursor = Console.GetCursorPosition();
+
+            int left = 0, top = 5, right = 92, bottom = 20;
+
+            MakeUIContainer(left, top, 32, bottom);
+            MakeUIContainer(30, top, 62, bottom);
+            MakeUIContainer(60, top, right, bottom);
+
+            for(int i = 0; i < 3; i++)
+                PrintDungeon(i);
+
+            Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
+        }
+
+        public void PrintDungeon(int stage)
+        {
+            var currentCursor = Console.GetCursorPosition();
+            var dm = GameManager.Instance.DataManager;
+
+            int left = 2 + (30 * (stage));
+
+            Console.SetCursorPosition(left + 11, 6);
+            Console.Write($"< {stage + 1} >");
+
+            Console.SetCursorPosition(left, 9);
+            Console.Write($"이  름  {dm.Dungeons[stage].Name}");
+
+            Console.SetCursorPosition(left, 13);
+            Console.Write($"권  장  방어력 {dm.Dungeons[stage].Condition} 이상");
+
+            Console.SetCursorPosition(left, 17);
+            Console.Write($"보  상  {dm.Dungeons[stage].Reward[0].ToString().PadLeft(4, ' ')} G");
+
+            Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
         }
 
     }

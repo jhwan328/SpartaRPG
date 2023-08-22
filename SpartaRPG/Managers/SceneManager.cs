@@ -1,10 +1,6 @@
 ﻿using Newtonsoft.Json;
-using SpartaRPG.Classes;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.ComponentModel.Design;
+using System.Net.Http.Json;
 using static SpartaRPG.Managers.SceneManager;
 
 namespace SpartaRPG.Managers
@@ -18,6 +14,7 @@ namespace SpartaRPG.Managers
         {
             GAME_INTRO,
             GAME_OUTRO,
+            TOWN,
             STATUS,
             INVENTORY_MAIN,
             INVENTORY_EQUIP,
@@ -31,8 +28,6 @@ namespace SpartaRPG.Managers
 
         public Scenes Scene;
 
-        private int maxOption;
-
         public SceneManager()
         {
             Scene = Scenes.GAME_INTRO;
@@ -41,44 +36,83 @@ namespace SpartaRPG.Managers
         public void LoadScene()
         {
             string path = MakePath();
+            if (path == string.Empty || !File.Exists(path)) return;
 
-            if(path != string.Empty)
+            string jsonContent;
+            using (FileStream fs = File.Open(path, FileMode.Open))
             {
-                //if(File.Exists(path)) { return; }
-
-                dynamic sceneData = JsonConvert.DeserializeObject(File.ReadAllText(path));
-                UIManager ui = GameManager.Instance.UIManager;
-
-                ui.PrintTitle(sceneData["Title"].ToString());
-                ui.PrintDescription(sceneData["Description"].ToString());
-
-                int scene = (int)Scene;
-
-                if(scene >= 3 && scene <= 8)
+                using (StreamReader reader = new StreamReader(fs))
                 {
-                    ui.PrintItemCategories();
-
-                    if(scene >= 6 && scene <= 8)
-                    {
-                        ui.PrintGold();
-                        if (scene == 6) ui.PrintShopItems(false);
-                        else if (scene == 7) ui.PrintShopItems(true);
-                        else ui.PrintInventoryItems(true);
-                    }
-                    else
-                    {
-                        if(scene == 4) ui.PrintInventoryItems(true);
-                        else ui.PrintInventoryItems(false);
-                    }
+                    jsonContent = reader.ReadToEnd();
                 }
-
-                List<String> option = sceneData["Option"].ToObject(typeof(List<String>));
-                ui.PrintOption(option);
-
-                maxOption = option.Count;
-
-                int input = CheckValidInput(0, maxOption);
             }
+
+            dynamic sceneData = JsonConvert.DeserializeObject(jsonContent);
+
+            UIManager ui = GameManager.Instance.UIManager;
+
+            ui.PrintTitle(sceneData["Title"].ToString());
+            ui.PrintDescription(sceneData["Description"].ToString());
+
+            if (Scene == Scenes.TOWN) GameManager.Instance.DataManager.SaveData();
+            else if (Scene == Scenes.STATUS)
+            {
+                ui.PrintGold();
+                ui.MakeStatusBox();
+                ui.PrintLevel();
+            }
+            else if (Scene >= Scenes.INVENTORY_MAIN && Scene <= Scenes.SHOP_SELL)
+            {
+                ui.PrintItemCategories();
+
+                if (Scene >= Scenes.SHOP_MAIN && Scene <= Scenes.SHOP_SELL)
+                {
+                    ui.PrintGold();
+                    if (Scene == Scenes.SHOP_MAIN) ui.PrintItems();
+                    else if (Scene == Scenes.SHOP_BUY) ui.PrintItems();
+                    else ui.PrintItems();
+                }
+                else
+                {
+                    if (Scene == Scenes.INVENTORY_EQUIP) ui.PrintItems();
+                    else ui.PrintItems();
+                }
+            }
+            else if (Scene == Scenes.DUNGEON)
+            {
+                ui.MakeDungeonBox();
+            }
+
+            int minOption = (int)sceneData["OptionMin"];
+            int maxOption;
+            List<string>? option;
+
+            if (Scene == Scenes.INVENTORY_EQUIP || Scene == Scenes.SHOP_BUY
+                || Scene == Scenes.SHOP_SELL || Scene == Scenes.GAME_OUTRO)
+            {
+                option = sceneData["Option2"].ToObject(typeof(List<string>));
+                maxOption = GameManager.Instance.DataManager.SortedItems.Count;
+            }
+            else if (Scene == Scenes.INVENTORY_SORT)
+            {
+                option = sceneData["Option3"].ToObject(typeof(List<string>));
+                maxOption = option.Count - 1;
+            }
+            else if (Scene == Scenes.DUNGEON)
+            {
+                option = sceneData["Option"].ToObject(typeof(List<string>));
+                maxOption = GameManager.Instance.DataManager.Dungeons.Count;
+            }
+            else
+            {
+                option = sceneData["Option"].ToObject(typeof(List<string>));
+                maxOption = option.Count - ((minOption == 0) ? 1 : 0);
+            }
+
+            ui.MakeOptionBox(option);
+            ui.MakeLogBox();
+
+            Input(minOption, maxOption);
         }
 
         private string MakePath()
@@ -86,6 +120,8 @@ namespace SpartaRPG.Managers
             switch (Scene)
             {
                 case Scenes.GAME_INTRO:
+                    return Path.Combine(_path, "GameMenu.json");
+                case Scenes.TOWN:
                     return Path.Combine(_path, "Town.json");
                 case Scenes.STATUS:
                     return Path.Combine(_path, "Status.json");
@@ -106,13 +142,14 @@ namespace SpartaRPG.Managers
             return string.Empty;
         }
 
-        private int CheckValidInput(int min, int max)
+        private void Input(int min, int max)
         {
+            DataManager dm = GameManager.Instance.DataManager;
+            UIManager ui = GameManager.Instance.UIManager;
+
             while (true)
             {
-                Console.WriteLine();
-                Console.WriteLine("원하시는 행동을 입력해주세요.");
-                Console.Write(">> ");
+                ui.SetCursorPositionForOption();
 
                 string input = Console.ReadLine();
 
@@ -120,102 +157,202 @@ namespace SpartaRPG.Managers
                 if (parseSuccess)
                 {
                     if (ret >= min && ret <= max)
-                        return ret;
-                }
-
-                Console.WriteLine("잘못된 입력입니다.");
-            }
-        }
-
-        private void InputLoopForShop(bool sellMode)
-        {
-            DataManager dm = GameManager.Instance.DataManager;
-
-            while (true)
-            {
-                Console.WriteLine();
-                Console.WriteLine("원하시는 행동을 입력해주세요.");
-                Console.Write(">> ");
-
-                string input = Console.ReadLine();
-
-                bool parseSuccess = int.TryParse(input, out var ret);
-                if (parseSuccess)
-                {
-                    if (ret == 0) break;
-                    else if (ret > 0)
                     {
-                        // (구매 모드)
-                        if (!sellMode && ret <= dm.Shop.Count)
+                        switch(Scene)
                         {
-                            // 선택한 장비
-                            var selectedItem = dm.Shop[ret - 1];
-                            //가 이미 구매됐다면
-                            if (selectedItem.IsSold)
-                                Console.WriteLine("이미 구매한 아이템입니다.");
-                            //가 구매 가능하다면
-                            else
-                            {
-                                // 돈이 충분하다면
-                                if (dm.Player.Gold >= selectedItem.Price)
+                            case Scenes.GAME_INTRO:
+                                switch(ret)
                                 {
-                                    Console.WriteLine("구매를 완료했습니다.");
-                                    dm.BuyItem(selectedItem);
+                                    case 1:
+                                        ui.AddLog("ID를 입력하세요.(영어로)");
+                                        dm.CreateId();
+                                        return;
+                                    case 2:
+                                        ui.AddLog("ID를 입력하세요.(영어로)");
+                                        dm.LoginId();
+                                        return;
+                                    case 0:
+                                        Environment.Exit(0);
+                                        return;
                                 }
-                                // 돈이 충분치 않다면
+                                break;
+                            case Scenes.GAME_OUTRO:
+                                if(ret == 0)
+                                    Environment.Exit(0);
+                                break;
+                            case Scenes.TOWN:
+                                switch (ret)
+                                {
+                                    case 1:
+                                        Scene = Scenes.STATUS;
+                                        return;
+                                    case 2:
+                                        Scene = Scenes.INVENTORY_MAIN;
+                                        return;
+                                    case 3:
+                                        Scene = Scenes.SHOP_MAIN;
+                                        return;
+                                    case 4:
+                                        Scene = Scenes.DUNGEON;
+                                        return;
+                                    case 5:
+                                        Scene = Scenes.SHELTER;
+                                        return;
+                                    case 6:
+                                        Environment.Exit(0);
+                                        return;
+                                }
+                                break;
+                            case Scenes.STATUS:
+                                switch (ret)
+                                {
+                                    case 0:
+                                        Scene = Scenes.TOWN;
+                                        return;
+                                }
+                                break;
+                            case Scenes.INVENTORY_MAIN:
+                                switch (ret)
+                                {
+                                    case 0:
+                                        Scene = Scenes.TOWN;
+                                        return;
+                                    case 1:
+                                        Scene = Scenes.INVENTORY_EQUIP;
+                                        return;
+                                    case 2:
+                                        Scene = Scenes.INVENTORY_SORT;
+                                        return;
+                                }
+                                break;
+                            case Scenes.INVENTORY_EQUIP:
+                                if (ret == 0)
+                                {
+                                    Scene = Scenes.INVENTORY_MAIN;
+                                    return;
+                                }
                                 else
-                                    Console.WriteLine("소지금이 부족합니다.");
-                            }
-                            continue;
-                        }
-                        // (판매 모드)
-                        else if (sellMode && ret <= dm.Inventory.Count)
-                        {
-                            // 선택한 장비
-                            var selectedItem = dm.Inventory[ret - 1];
-
-                            // 가 장착 중이라면
-                            if (selectedItem.IsEquipped)
-                            {
-                                Console.WriteLine("장착 중인 장비는 판매할 수 없습니다.");
-                                Console.WriteLine("해제하고 판매하시겠습니까? (예: 0 / 아니오: 1)");
-                                if (CheckValidInput(0, 1) == 0)
                                 {
-                                    dm.Unwear(selectedItem.Part);
-                                    Console.WriteLine("판매를 완료했습니다.");
-                                    dm.SellItem(selectedItem);
+                                    var selectedItem = dm.SortedItems[ret - 1];
+
+                                    if (selectedItem.IsEquipped)
+                                    {
+                                        dm.Unwear(selectedItem.Part);
+                                    }
+                                    else
+                                    {
+                                        if (dm.Player.Equipments[(int)selectedItem.Part] != null)
+                                            dm.Unwear(selectedItem.Part);
+
+                                        dm.Wear(selectedItem);
+                                    }
+
+                                    return;
                                 }
-                            }
-                            // 가 장착 중이 아니라면
-                            else
-                            {
-                                Console.WriteLine("판매를 완료했습니다.");
-                                dm.SellItem(selectedItem);
-                            }
-                            continue;
+                            case Scenes.INVENTORY_SORT:
+                                if (ret == 0)
+                                {
+                                    Scene = Scenes.INVENTORY_MAIN;
+                                    return;
+                                }
+                                else
+                                {
+                                    dm.SortInventory(ret);
+                                    return;
+                                }
+                            case Scenes.SHOP_MAIN:
+                                switch (ret)
+                                {
+                                    case 0:
+                                        Scene = Scenes.TOWN;
+                                        return;
+                                    case 1:
+                                        Scene = Scenes.SHOP_BUY;
+                                        return;
+                                    case 2:
+                                        Scene = Scenes.SHOP_SELL;
+                                        return;
+                                }
+                                break;
+                            case Scenes.SHOP_BUY:
+                                if (ret == 0)
+                                {
+                                    Scene = Scenes.SHOP_MAIN;
+                                    return;
+                                }
+                                else
+                                {
+                                    var selectedItem = dm.SortedItems[ret - 1];
+
+                                    if (dm.Player.Gold >= selectedItem.Price)
+                                    {
+                                        ui.AddLog("구매를 완료했습니다.");
+                                        dm.BuyItem(selectedItem);
+                                    }
+                                    else
+                                        ui.AddLog("소지금이 부족합니다.");
+
+                                    return;
+                                }
+                            case Scenes.SHOP_SELL:
+                                if (ret == 0)
+                                {
+                                    Scene = Scenes.SHOP_MAIN;
+                                    return;
+                                }
+                                else
+                                {
+                                    var selectedItem = dm.SortedItems[ret - 1];
+
+                                    if (selectedItem.IsEquipped)
+                                    {
+                                        ui.AddLog("장착 중인 장비는 판매할 수 없습니다.");
+                                    }
+                                    else
+                                    {
+                                        ui.AddLog("판매를 완료했습니다.");
+                                        dm.SellItem(selectedItem);
+                                    }
+
+                                    return;
+                                }
+                            case Scenes.DUNGEON:
+                                if (ret == 0)
+                                {
+                                    Scene = Scenes.TOWN;
+                                    return;
+                                }
+                                else
+                                {
+                                    dm.ExploreDungeon(ret);
+                                    if (dm.Player.CurrentHp == 0)
+                                    {
+                                        Scene = Scenes.GAME_OUTRO;
+                                        ui.AddLog("사망했습니다.");
+                                    }
+                                    return;
+                                }
+                            case Scenes.SHELTER:
+                                switch (ret)
+                                {
+                                    case 0:
+                                        Scene = Scenes.TOWN;
+                                        return;
+                                    case 1:
+                                        dm.RestPlayer();
+                                        return;
+                                }
+                                break;
                         }
                     }
-
                 }
 
-                //if (input == "[")
-                //{
-                //    if (_category == null)
-                //        _category = (Item.Parts)(Enum.GetValues(typeof(Item.Parts)).Length - 1);
-                //    else if (_category == (Item.Parts)0)
-                //        _category = null;
-                //    else _category--;
-                //}
-                //else if (input == "]")
-                //{
-                //    if (_category == null)
-                //        _category = (Item.Parts)0;
-                //    else if (_category == (Item.Parts)(Enum.GetValues(typeof(Item.Parts)).Length - 1))
-                //        _category = null;
-                //    else _category++;
-                //}
-                //else
-                    Console.WriteLine("잘못된 입력입니다.");
+                if (Scene >= Scenes.INVENTORY_MAIN && Scene <= Scenes.SHOP_SELL)
+                {
+                    if(ui.ShiftCategory(input)) return;
+                }
+                
+                ui.AddLog("잘못된 입력입니다.");
             }
         }
     }
