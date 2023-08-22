@@ -169,7 +169,7 @@ namespace SpartaRPG.Managers
                     break;
             }
 
-            for (int i = 0; i < dm.SortedItems.Count; i++)
+            for (int i = 0; i < dm.SortedItems.Count && i < 12; i++)
             {
                 var item = dm.SortedItems[i];
 
