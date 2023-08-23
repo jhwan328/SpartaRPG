@@ -84,6 +84,7 @@ namespace SpartaRPG.Managers
             {
                 ui.MakeDungeonBox();
                 ui.PrintDef();
+                ui.PrintLevel();
             }
             else if (Scene == Scenes.SHELTER)
             {

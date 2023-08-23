@@ -717,7 +717,7 @@ namespace SpartaRPG.Managers
 
                     item.Level = 0;
                     Inventory.Remove(item);
-                    if(!Shop.Exists(x => x == item)) Shop.Add(item);
+                    if(!Shop.Exists(x => x.Name == item.Name)) Shop.Add(item);
 
                     ui.AddLog($"강화에 실패하여 {item.Name}(이)가 파괴되었습니다");
                 }

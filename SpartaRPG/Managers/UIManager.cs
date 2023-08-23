@@ -110,7 +110,7 @@ namespace SpartaRPG.Managers
             var currentCursor = Console.GetCursorPosition();
             var player = GameManager.Instance.DataManager.Player;
 
-            int fillExpBar = player.Exp * 8 / player.Level;
+            int fillExpBar =  (int)(8 * (float)player.Exp / player.Level + 0.5f);
             if (fillExpBar >= 8) fillExpBar = 8;
 
             Console.SetCursorPosition(0, _goldTopPostion);
