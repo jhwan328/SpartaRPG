@@ -1,4 +1,8 @@
-﻿namespace SpartaRPG.Classes
+﻿/// <summary
+/// 보상이나 조건 등을 가진 던전 클래스
+/// </summary>
+
+namespace SpartaRPG.Classes
 {
     internal class Dungeon
     {

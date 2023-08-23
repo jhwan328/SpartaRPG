@@ -1,19 +1,26 @@
 {
-  "Name": "GM",
+  "Name": "[GM}",
   "Job": "전사",
-  "Level": 12,
-  "Exp": 8,
-  "Atk": 17,
-  "Def": 21,
-  "MaxHp": 100,
-  "CurrentHp": 42,
-  "Gold": 184185,
-  "inventory": [
-    2,
-    6,
-    11
+  "Level": 1,
+  "Exp": 0,
+  "Atk": 10,
+  "Def": 5,
+  "MaxHp": 10000,
+  "CurrentHp": 10000,
+  "Gold": 0,
+  "Inventory": [
+    0,
+    10,
+    20,
+    30,
+    40
   ],
-  "Weapon": 2,
-  "Helmet": 6,
-  "ChestPlate": 11
+  "ItemLevel": [
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "MaxStage": 1
 }

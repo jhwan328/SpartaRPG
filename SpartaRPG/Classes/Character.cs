@@ -1,4 +1,8 @@
-﻿namespace SpartaRPG.Classes
+﻿/// <summary
+/// 캐릭터 클래스
+/// </summary>
+
+namespace SpartaRPG.Classes
 {
     internal class Character
     {
@@ -35,9 +39,9 @@
             var boots = Equipments[(int)(Item.Parts.BOOTS)];
 
             if (helmet != null)
-                totalHp += helmet.Stat;
+                totalHp += helmet.Stat + helmet.BonusStat;
             if (boots != null)
-                totalHp += boots.Stat;
+                totalHp += boots.Stat + boots.BonusStat;
 
             CurrentHp += hp;
 

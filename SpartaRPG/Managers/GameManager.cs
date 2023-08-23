@@ -1,4 +1,8 @@
-﻿namespace SpartaRPG.Managers
+﻿/// <summary
+/// 다른 매니저들을 static으로 생성해주는 싱글톤 클래스
+/// </summary>
+
+namespace SpartaRPG.Managers
 {
     internal class GameManager
     {

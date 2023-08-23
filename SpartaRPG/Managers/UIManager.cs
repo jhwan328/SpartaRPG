@@ -1,5 +1,8 @@
-﻿using SpartaRPG.Classes;
-using System.Numerics;
+﻿/// <summary
+/// Console에 직접적으로 보여지는 부분을 관리하는 클래스
+/// </summary>
+
+using SpartaRPG.Classes;
 using System.Text;
 using static SpartaRPG.Managers.SceneManager;
 
@@ -294,9 +297,9 @@ namespace SpartaRPG.Managers
 
         }
 
-        public void AddLog(string log)
+        public void AddLog(string log, bool extension = false)
         {
-            if (_logTop > 20) {
+            if (_logTop > 20 && !extension) {
                 Logs.RemoveRange(0, 5);
                 MakeLogBox();
             }
@@ -441,6 +444,7 @@ namespace SpartaRPG.Managers
         public void MakeDungeonBox()
         {
             var currentCursor = Console.GetCursorPosition();
+            var dm = GameManager.Instance.DataManager;
 
             int left = 0, top = 5, right = 92, bottom = 20;
 
@@ -448,21 +452,25 @@ namespace SpartaRPG.Managers
             MakeUIContainer(30, top, 62, bottom);
             MakeUIContainer(60, top, right, bottom);
 
-            for(int i = 0; i < 3; i++)
+            for (int i = 0; i < 3; i++)
+            {
                 PrintDungeon(i);
+                if (dm.StagePage + i + 1 > dm.MaxStage) PrintLockedDungeon(i);
+            }
 
             Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
         }
 
-        public void PrintDungeon(int stage)
+        public void PrintDungeon(int num)
         {
             var currentCursor = Console.GetCursorPosition();
             var dm = GameManager.Instance.DataManager;
+            int stage = num + dm.StagePage;
 
-            int left = 2 + (30 * (stage));
+            int left = 2 + (30 * (num));
 
             Console.SetCursorPosition(left + 11, 6);
-            Console.Write($"< {stage + 1} >");
+            Console.Write($"< {num + 1} >");
 
             Console.SetCursorPosition(left, 9);
             Console.Write($"이  름  {dm.Dungeons[stage].Name}");
@@ -472,6 +480,119 @@ namespace SpartaRPG.Managers
 
             Console.SetCursorPosition(left, 17);
             Console.Write($"보  상  {dm.Dungeons[stage].Reward[0].ToString().PadLeft(4, ' ')} G");
+
+            Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
+        }
+
+        public void PrintLockedDungeon(int num)
+        {
+            var currentCursor = Console.GetCursorPosition();
+            var currentForgroundColor = Console.ForegroundColor;
+
+            int left = 2 + (30 * (num));
+
+            Console.SetCursorPosition(left + 10, 6);
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.Write($"< 잠김 >");
+            Console.ForegroundColor = currentForgroundColor;
+
+            Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
+        }
+
+        public void PrintItemsAtSmithy()
+        {
+            var currentCursor = Console.GetCursorPosition();
+
+            Console.SetCursorPosition(0, _itemsTopPostion);
+
+            DataManager dm = GameManager.Instance.DataManager;
+
+            dm.SortItems(dm.Inventory);
+
+            for (int i = 0; i < dm.SortedItems.Count && i < 12; i++)
+            {
+                ClearLine();
+                dm.SortedItems[i].PrintInfoAtSmithy(i + 1);
+            }
+
+            ClearLine();
+
+            Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
+        }
+
+        public void PrintDef()
+        {
+            var currentCursor = Console.GetCursorPosition();
+            var dm = GameManager.Instance.DataManager;
+
+            Console.SetCursorPosition(_goldLeftPostion, _goldTopPostion);
+            Console.Write("┌─────────────────────────┐");
+            Console.SetCursorPosition(_goldLeftPostion, _goldTopPostion + 1);
+            Console.Write($"│ 방어력│ {(dm.Player.Def + dm.GetDefBonus()).ToString().PadLeft(16, ' ')}│");
+            Console.SetCursorPosition(_goldLeftPostion, _goldTopPostion + 2);
+            Console.Write("┴─────────────────────────┤");
+
+            Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
+        }
+
+        public void MakeShelterBox()
+        {
+            var currentCursor = Console.GetCursorPosition();
+            var dm = GameManager.Instance.DataManager;
+
+            int left = 0, top = 5, right = 92, bottom = 20;
+
+            MakeUIContainer(left, top, 32, bottom);
+            MakeUIContainer(30, top, 62, bottom);
+            MakeUIContainer(60, top, right, bottom);
+
+            Console.SetCursorPosition(_goldLeftPostion, top);
+            Console.Write("┴");
+            Console.SetCursorPosition(right - 2, top);
+            Console.Write("┤");
+
+            for (int i = 0; i < 3; i++)
+            {
+                PrintShelter(i);
+            }
+
+            Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
+        }
+
+
+        public void PrintShelter(int num)
+        {
+            var currentCursor = Console.GetCursorPosition();
+            var dm = GameManager.Instance.DataManager;
+
+            int left = 2 + (30 * (num));
+
+            Console.SetCursorPosition(left + 11, 6);
+            Console.Write($"< {num + 1} >");
+
+            Console.SetCursorPosition(left + 9, 9);
+            Console.Write($"{dm.Shelters[num].Name}");
+
+            Console.SetCursorPosition(left+3, 14);
+            Console.Write($"회복량        {dm.Shelters[num].Heal} H");
+
+            Console.SetCursorPosition(left+3, 17);
+            Console.Write($"비  용        {dm.Shelters[num].Cost} G");
+
+            Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
+        }
+
+        public void PrintHp()
+        {
+            var currentCursor = Console.GetCursorPosition();
+            var dm = GameManager.Instance.DataManager;
+
+            Console.SetCursorPosition(0, _goldTopPostion);
+            Console.Write("┌─────────────────────────┐");
+            Console.SetCursorPosition(0, _goldTopPostion + 1);
+            Console.Write($"│ 체  력│ {dm.Player.CurrentHp.ToString().PadLeft(6, ' ')}  / {(dm.Player.MaxHp + dm.GetHpBonus()).ToString().PadLeft(6, ' ')}│");
+            Console.SetCursorPosition(0, _goldTopPostion + 2);
+            Console.Write("├─────────────────────────┴");
 
             Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
         }

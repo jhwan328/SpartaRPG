@@ -1,7 +1,8 @@
-﻿using Newtonsoft.Json;
-using System.ComponentModel.Design;
-using System.Net.Http.Json;
-using static SpartaRPG.Managers.SceneManager;
+﻿/// <summary
+/// Scene을 관리하고 각 Scene이 수행할 기능까지도 구현된 클래스
+/// </summary>
+
+using Newtonsoft.Json;
 
 namespace SpartaRPG.Managers
 {
@@ -23,7 +24,8 @@ namespace SpartaRPG.Managers
             SHOP_BUY,
             SHOP_SELL,
             DUNGEON,
-            SHELTER
+            SHELTER,
+            SMITHY
         }
 
         public Scenes Scene;
@@ -81,6 +83,19 @@ namespace SpartaRPG.Managers
             else if (Scene == Scenes.DUNGEON)
             {
                 ui.MakeDungeonBox();
+                ui.PrintDef();
+            }
+            else if (Scene == Scenes.SHELTER)
+            {
+                ui.PrintGold();
+                ui.MakeShelterBox();
+                ui.PrintHp();
+            }
+            else if (Scene == Scenes.SMITHY)
+            {
+                ui.PrintItemCategories();
+                ui.PrintGold();
+                ui.PrintItemsAtSmithy();
             }
 
             int minOption = (int)sceneData["OptionMin"];
@@ -101,7 +116,18 @@ namespace SpartaRPG.Managers
             else if (Scene == Scenes.DUNGEON)
             {
                 option = sceneData["Option"].ToObject(typeof(List<string>));
-                maxOption = GameManager.Instance.DataManager.Dungeons.Count;
+                maxOption = GameManager.Instance.DataManager.MaxStage - GameManager.Instance.DataManager.StagePage;
+                if (maxOption < 0) maxOption = 0;
+            }
+            else if (Scene == Scenes.SHELTER)
+            {
+                option = sceneData["Option"].ToObject(typeof(List<string>));
+                maxOption = 3;
+            }
+            else if (Scene == Scenes.SMITHY)
+            {
+                option = sceneData["Option"].ToObject(typeof(List<string>));
+                maxOption = GameManager.Instance.DataManager.SortedItems.Count;
             }
             else
             {
@@ -120,6 +146,7 @@ namespace SpartaRPG.Managers
             switch (Scene)
             {
                 case Scenes.GAME_INTRO:
+                case Scenes.GAME_OUTRO:
                     return Path.Combine(_path, "GameMenu.json");
                 case Scenes.TOWN:
                     return Path.Combine(_path, "Town.json");
@@ -137,6 +164,8 @@ namespace SpartaRPG.Managers
                     return Path.Combine(_path, "Dungeon.json");
                 case Scenes.SHELTER:
                     return Path.Combine(_path, "Shelter.json");
+                case Scenes.SMITHY:
+                    return Path.Combine(_path, "Smithy.json");
             }
 
             return string.Empty;
@@ -199,6 +228,9 @@ namespace SpartaRPG.Managers
                                         Scene = Scenes.SHELTER;
                                         return;
                                     case 6:
+                                        Scene = Scenes.SMITHY;
+                                        return;
+                                    case 7:
                                         Environment.Exit(0);
                                         return;
                                 }
@@ -333,25 +365,48 @@ namespace SpartaRPG.Managers
                                     return;
                                 }
                             case Scenes.SHELTER:
-                                switch (ret)
+                                if (ret == 0)
                                 {
-                                    case 0:
-                                        Scene = Scenes.TOWN;
-                                        return;
-                                    case 1:
-                                        dm.RestPlayer();
-                                        return;
+                                    Scene = Scenes.TOWN;
+                                    return;
                                 }
-                                break;
+                                else
+                                {
+                                    dm.RestPlayer(ret);
+                                    return;
+                                }
+                            case Scenes.SMITHY:
+                                if (ret == 0)
+                                {
+                                    Scene = Scenes.TOWN;
+                                    return;
+                                }
+                                else
+                                {
+                                    var selectedItem = dm.SortedItems[ret - 1];
+
+                                    dm.StrengthenItem(selectedItem);
+
+                                    return;
+                                }
                         }
                     }
                 }
 
-                if (Scene >= Scenes.INVENTORY_MAIN && Scene <= Scenes.SHOP_SELL)
+                if (Scene >= Scenes.INVENTORY_MAIN && Scene <= Scenes.SHOP_SELL || Scene == Scenes.SMITHY)
                 {
                     if(ui.ShiftCategory(input)) return;
                 }
-                
+                else if (Scene >= Scenes.DUNGEON)
+                {
+                    if (dm.ShiftStagePage(input)) return;
+                }
+                else if (Scene == Scenes.TOWN)
+                {
+                    if (input == "x" || input == "X")
+                        Environment.Exit(0);
+                }
+
                 ui.AddLog("잘못된 입력입니다.");
             }
         }
