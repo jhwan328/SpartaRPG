@@ -36,11 +36,14 @@ namespace SpartaRPG.Managers
 
         public void ClearLine()
         {
+            var currentCursorLeft = Console.GetCursorPosition();
+
             for (int i = 0; i < Console.WindowWidth; i++)
             {
                 Console.Write(" ");
             }
-            Console.Write("\r");
+
+            Console.SetCursorPosition(currentCursorLeft.Left, currentCursorLeft.Top);
         }
 
         public void PrintTitle(string title, ConsoleColor color = ConsoleColor.DarkRed)
