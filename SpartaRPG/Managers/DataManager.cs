@@ -175,21 +175,21 @@ namespace SpartaRPG.Managers
             {
                 Item item = Inventory.Find(x => x.Id == (int)data["ChestPlate"]);
 
-                Player.Equipments[(int)Item.Parts.HELMET] = item;
+                Player.Equipments[(int)Item.Parts.CHESTPLATE] = item;
                 item.IsEquipped = true;
             }
             if (data["Leggings"] != null)
             {
                 Item item = Inventory.Find(x => x.Id == (int)data["Leggings"]);
 
-                Player.Equipments[(int)Item.Parts.HELMET] = item;
+                Player.Equipments[(int)Item.Parts.LEGGINGS] = item;
                 item.IsEquipped = true;
             }
             if (data["Boots"] != null)
             {
                 Item item = Inventory.Find(x => x.Id == (int)data["Boots"]);
 
-                Player.Equipments[(int)Item.Parts.HELMET] = item;
+                Player.Equipments[(int)Item.Parts.BOOTS] = item;
                 item.IsEquipped = true;
             }
 
