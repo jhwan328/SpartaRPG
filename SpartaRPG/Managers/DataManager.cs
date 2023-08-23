@@ -449,78 +449,62 @@ namespace SpartaRPG.Managers
 
         public void ExploreDungeon(int num)
         {
-            int stage = num + StagePage;
-            Random rnd = new Random();
-            Dungeon dungeon = Dungeons[stage - 1];
             UIManager ui = GameManager.Instance.UIManager;
+            int stage = num + StagePage;
+            Dungeon dungeon = Dungeons[stage - 1];
             bool clear = false;
 
-            var iHp = Player.CurrentHp;
-            var iGold = Player.Gold;
+            Random rnd = new Random();
+
+            ui.ClearLog();
+
+            int damage = rnd.Next(20, 36) - (Player.Def + GetDefBonus() - dungeon.Condition);
+            if (damage < 0) damage = 0;
 
             if (Player.Def + GetDefBonus() < dungeon.Condition && rnd.Next(0, 100) < 40)
             {
                 clear = false;
+                damage /= 2;
+                Player.ChangeHP(-damage);
 
-                int damage = rnd.Next(20, 36) - (Player.Def + GetDefBonus() - dungeon.Condition);
-                if (damage < 0) damage = 0;
-                Player.ChangeHP(-(int)(damage / 2));
+                ui.AddLog($"{dungeon.Name} 도전 실패");
+                if(damage > 0) ui.AddLog($"체력  - {damage}");
+                ui.AddLog("");
             }
             else
             {
                 clear = true;
-                int damage = rnd.Next(20, 36) - (Player.Def + GetDefBonus() - dungeon.Condition);
-                if (damage < 0) damage = 0;
+                if (stage == MaxStage) MaxStage++;
                 Player.ChangeHP(-damage);
 
                 int rewardGold = (int)(dungeon.Reward[0]
                     * (100 + rnd.Next(Player.Atk + GetAtkBonus(), 2 * Player.Atk + GetAtkBonus() + 1)) / 100);
                 Player.Gold += rewardGold;
-            }
 
-            ui.ClearLog();
-            if (clear)
-            {
                 ui.AddLog($"{dungeon.Name} 클리어");
-                if(stage == MaxStage)
-                {
-                    MaxStage++;
-                }
-            }
-            else ui.AddLog($"{dungeon.Name} 도전 실패");
-
-            ui.AddLog($"체력 {iHp} -> {Player.CurrentHp}");
-            if (clear)
-            {
-                if (Player.Gold / 1000000 > 0)
-                {
-                    ui.AddLog($"소지금 {iGold} ");
-                    ui.AddLog($"-> {Player.Gold}");
-                }
-                else ui.AddLog($"소지금 {iGold} -> {Player.Gold}");
-                ui.AddLog("");
+                if (damage > 0) ui.AddLog($"체력  - {damage}");
+                ui.AddLog($"골드  + {rewardGold} G");
 
                 Player.Exp += stage;
-
                 if (Player.Level <= Player.Exp)
                 {
                     Player.Exp -= Player.Level;
 
+                    ui.AddLog("");
                     ui.AddLog("레벨이 올랐습니다.");
-                    ui.AddLog($"레벨 {Player.Level} -> {++Player.Level}");
-                    if (Player.Level % 2 == 1)
-                        ui.AddLog($"공격력 {Player.Atk} -> {++Player.Atk}");
+                    if (Player.Level % 2 == 1) ui.AddLog($"공격력 {Player.Atk} -> {++Player.Atk}");
                     ui.AddLog($"방어력 {Player.Def} -> {++Player.Def}");
                 }
 
-                if (dungeon.Reward.Count > 1 && rnd.Next(0, 10000) < 100 + Player.Atk + GetAtkBonus())
+                if (dungeon.Reward.Count > 1 && rnd.Next(0, 100) < 100 + Player.Atk + GetAtkBonus())
                 {
                     int rewardItemId = dungeon.Reward[rnd.Next(1, dungeon.Reward.Count)];
 
                     Inventory.Add(MakeNewItem(rewardItemId));
-                    if(!DiscoveredItem.Exists(x => x == rewardItemId)) DiscoveredItem.Add(rewardItemId);
+                    if (!DiscoveredItem.Exists(x => x == rewardItemId)) DiscoveredItem.Add(rewardItemId);
 
-                    ui.AddLog($"전리품으로 {_items[rewardItemId].Name}(을)를 얻었습니다.", true);
+                    ui.AddLog("");
+                    ui.AddLog($"전리품으로 {_items[rewardItemId].Name}(을)를 얻었습니다.");
                 }
             }
         }

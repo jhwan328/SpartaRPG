@@ -114,14 +114,17 @@ namespace SpartaRPG.Managers
             if (fillExpBar >= 8) fillExpBar = 8;
 
             Console.SetCursorPosition(0, _goldTopPostion);
-            Console.Write("┌─────────────────────────┐");
+            Console.Write("┌───────┬─────────────────┐");
             Console.SetCursorPosition(0, _goldTopPostion + 1);
-            Console.Write($"│ Lv {player.Level.ToString().PadLeft(3, ' ')} |");
-            Console.Write("".PadRight(fillExpBar, '■'));
-            Console.Write("".PadRight(8 - fillExpBar, '□'));
+            Console.Write($"│ Lv {player.Level.ToString().PadLeft(3, ' ')}│ ");
+            Console.BackgroundColor = ConsoleColor.Green;
+            Console.Write("".PadRight(fillExpBar, '　'));
+            Console.BackgroundColor = ConsoleColor.DarkGreen;
+            Console.Write("".PadRight(8 - fillExpBar, '　'));
+            Console.BackgroundColor = ConsoleColor.Black;
             Console.Write("│");
             Console.SetCursorPosition(0, _goldTopPostion + 2);
-            Console.Write("├─────────────────────────┴");
+            Console.Write("├───────┴─────────────────┴");
 
             Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
         }
@@ -286,7 +289,7 @@ namespace SpartaRPG.Managers
         {
             var currentCursor = Console.GetCursorPosition();
 
-            int left = 92, top = 0, right = 120, bottom = 30;
+            int left = 92, top = 0, right = 120, bottom = 23;
             _logLeft = left + 2;  _logTop = top + 2;
 
             MakeUIContainer(left, top, right, bottom);
@@ -296,13 +299,13 @@ namespace SpartaRPG.Managers
                 PrintLog(log);
             }
 
-            Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
+            Console.SetCursorPosition(currentCursor.Left, currentCursor.Top); MakePlayerBox();
 
         }
 
-        public void AddLog(string log, bool extension = false)
+        public void AddLog(string log)
         {
-            if (_logTop > 20 && !extension) {
+            if (_logTop > 20) {
                 Logs.RemoveRange(0, 5);
                 MakeLogBox();
             }
@@ -562,7 +565,6 @@ namespace SpartaRPG.Managers
             Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
         }
 
-
         public void PrintShelter(int num)
         {
             var currentCursor = Console.GetCursorPosition();
@@ -596,6 +598,17 @@ namespace SpartaRPG.Managers
             Console.Write($"│ 체  력│ {dm.Player.CurrentHp.ToString().PadLeft(6, ' ')}  / {(dm.Player.MaxHp + dm.GetHpBonus()).ToString().PadLeft(6, ' ')}│");
             Console.SetCursorPosition(0, _goldTopPostion + 2);
             Console.Write("├─────────────────────────┴");
+
+            Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
+        }
+
+        public void MakePlayerBox()
+        {
+            var currentCursor = Console.GetCursorPosition();
+
+            int left = 92, top = 23, right = 120, bottom = 30;
+
+            MakeUIContainer(left, top, right, bottom);
 
             Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
         }
