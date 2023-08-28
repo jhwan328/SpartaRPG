@@ -12,7 +12,8 @@ namespace SpartaRPG.Classes
             HELMET,
             CHESTPLATE,
             LEGGINGS,
-            BOOTS
+            BOOTS,
+            POTIONS
         }
         public string Name { get; }
         public int Id { get; }
@@ -22,6 +23,7 @@ namespace SpartaRPG.Classes
         public int Price { get; }
         public int Level { get; set; }
         public bool IsEquipped { get; set; }
+       
         public int BonusStat
         {
             get
@@ -62,6 +64,9 @@ namespace SpartaRPG.Classes
                 case Parts.CHESTPLATE:
                 case Parts.LEGGINGS:
                     statByPart = "방어력";
+                    break;
+                case Parts.POTIONS:
+                    statByPart = "회복량";
                     break;
             }
 

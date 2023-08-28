@@ -1,0 +1,35 @@
+{
+  "Name": "gm",
+  "Job": "전사",
+  "Level": 1,
+  "Exp": 0,
+  "Atk": 13,
+  "Def": 8,
+  "MaxHp": 100,
+  "CurrentHp": 78,
+  "Gold": 2280,
+  "Inventory": [
+    40,
+    10,
+    30,
+    0,
+    20,
+    1,
+    51
+  ],
+  "ItemLevel": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "Weapon": 1,
+  "Helmet": 10,
+  "ChestPlate": 20,
+  "Leggings": 30,
+  "Boots": 40,
+  "MaxStage": 2
+}

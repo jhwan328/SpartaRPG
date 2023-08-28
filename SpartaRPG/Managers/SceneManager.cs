@@ -256,8 +256,10 @@ namespace SpartaRPG.Managers
                                     case 2:
                                         Scene = Scenes.INVENTORY_SORT;
                                         return;
+                               
                                 }
                                 break;
+                      
                             case Scenes.INVENTORY_EQUIP:
                                 if (ret == 0)
                                 {
@@ -276,7 +278,7 @@ namespace SpartaRPG.Managers
                                     {
                                         if (dm.Player.Equipments[(int)selectedItem.Part] != null)
                                             dm.Unwear(selectedItem.Part);
-
+                                                               
                                         dm.Wear(selectedItem);
                                     }
 

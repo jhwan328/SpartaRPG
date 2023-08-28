@@ -62,8 +62,8 @@ namespace SpartaRPG.Managers
 
             Console.SetCursorPosition(0, _categoryTopPostion);
 
-            Console.WriteLine("┌───────┐───────┐───────┐───────┐───────┐───────┐");
-            Console.WriteLine("│  전체 │  무기 │  투구 │  갑옷 │  바지 │  신발 │");
+            Console.WriteLine("┌───────┐───────┐───────┐───────┐───────┐───────┐───────┐");
+            Console.WriteLine("│  전체 │  무기 │  투구 │  갑옷 │  바지 │  신발 │  포션 │");
             switch (Category)
             {
                 case null:
@@ -84,8 +84,11 @@ namespace SpartaRPG.Managers
                 case Item.Parts.BOOTS:
                     Console.Write("────────────────────────────────────────┘       └─────");
                     break;
+                case Item.Parts.POTIONS:
+                    Console.Write("────────────────────────────────────────────────┘       └");
+                    break;
             }
-            Console.Write("".PadRight(Console.WindowWidth - 54, '─'));
+            Console.Write("".PadRight(Console.WindowWidth - 58, '─'));
             Console.Write("\n\n");
 
             if (forRefresh) Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
@@ -191,6 +194,7 @@ namespace SpartaRPG.Managers
 
             Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
         }
+     
 
         public bool ShiftCategory(string input)
         {
@@ -613,5 +617,7 @@ namespace SpartaRPG.Managers
             Console.SetCursorPosition(currentCursor.Left, currentCursor.Top);
         }
 
+       
     }
 }
+
